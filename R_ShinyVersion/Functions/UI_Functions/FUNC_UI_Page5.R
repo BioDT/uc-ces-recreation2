@@ -1,9 +1,9 @@
 # Define UI for Page 5
 ui_page5 <- function() {
-  hidden(
+#  hidden(
   div(
     id = "page5",
-    h2("Step2: Model Parameterization"),
+    h2("Step 3: Persona Parameterization"),
     sidebarLayout(
       sidebarPanel(
         
@@ -12,7 +12,7 @@ ui_page5 <- function() {
         
         #### Water
         
-        h3(tags$b("Water: The influence of water the recreational potential")),
+        h3(tags$b("Water: The influence of water on the recreational potential")),
         
         h4("The proximity to water (lakes, rivers) has been shown to be especially important for recreation.  
          Whilst considering the following from the view point of your Persona, please score each with a value between 0 and 10"),
@@ -38,11 +38,12 @@ ui_page5 <- function() {
         actionButton("submit", "Submit"),
         downloadButton("export_responses", "Export Responses"),
         textOutput("response"),
-        actionButton("next5", "Next")
+        actionButton("next5", "Next"),
+        width = 6
       ),
       
       mainPanel()
     )
-  )
+#  )
   )
 }

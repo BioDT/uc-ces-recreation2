@@ -1,4 +1,7 @@
 server_page1 <- function(input, output, session, shapefile_name_global) {
+  library(sf)
+  
+  # define the directory to contain raw shapefiles
   upload_dir <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Raw_Shapefile"
   
   # Function to list all shapefiles recursively
@@ -28,9 +31,10 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
     # Create a local variable
     shapefile_name <- input$shapefile_name
     
-    # Update the reactiveValues object
+    # Update the reactiveValues object to create global variable
     shapefile_name_global$input_text <- shapefile_name
     
+    # unzip folders containing shapefiles
     unzip_dir <- file.path(upload_dir, shapefile_name)
     
     if (!dir.exists(upload_dir)) {
@@ -48,7 +52,6 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
       return()
     }
     
-    # Rename shapefile files with the given name
     file_extension <- function(file) {
       tools::file_ext(file)
     }
@@ -57,7 +60,6 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
       file.rename(file, file.path(unzip_dir, paste0(shapefile_name, ".", file_extension(file))))
     }
     
-    # Read the renamed shapefile
     renamed_shapefile_path <- file.path(unzip_dir, paste0(shapefile_name, ".shp"))
     shp <- try(st_read(renamed_shapefile_path), silent = TRUE)
     
@@ -68,8 +70,6 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
     
     # Drop Z dimension if present
     shp <- st_zm(shp, drop = TRUE, what = "ZM")
-    
-    # Transform CRS to WGS84 if necessary
     shp_crs <- st_crs(shp)
     print(paste("CRS of the shapefile:", shp_crs))
     
@@ -83,11 +83,11 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
       }
     }
     
-    # Clear previous map
+    # print output map on upload
     output$map <- renderLeaflet({
       leaflet() %>%
         addTiles() %>%
-        setView(lng = -4.2026, lat = 57.1497, zoom = 6) %>%  # Coordinates for Scotland
+        setView(lng = -4.2026, lat = 57.1497, zoom = 6) %>%
         addPolygons(data = shp)
     })
     
@@ -113,8 +113,6 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
     
     # Drop Z dimension if present
     shp <- st_zm(shp, drop = TRUE, what = "ZM")
-    
-    # Transform CRS to WGS84 if necessary
     shp_crs <- st_crs(shp)
     print(paste("CRS of the existing shapefile:", shp_crs))
     
@@ -128,20 +126,34 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
       }
     }
     
-    # Update the reactiveValues object with the selected shapefile name
-    shapefile_path <- sub("\\.shp$", "", shapefile_path)  # Strip extension
-    print(paste("Incoming global name (page1): ", shapefile_path))
+    shapefile_path <- sub("\\.shp$", "", shapefile_path)
     shapefile_name_global$input_text <- basename(shapefile_path)
+    print(paste("Incoming global name: ", shapefile_name_global$input_text))
     
-    # Clear previous map
     output$map <- renderLeaflet({
       leaflet() %>%
         addTiles() %>%
-        setView(lng = -4.2026, lat = 57.1497, zoom = 6) %>%  # Coordinates for Scotland
+        setView(lng = -4.2026, lat = 57.1497, zoom = 6) %>%
         addPolygons(data = shp)
     })
     
     output$message <- renderText(paste("Shapefile", basename(shapefile_path), "loaded and displayed."))
+  })
+  
+  observeEvent(input$file_option, {
+    if (input$file_option == "upload") {
+      shinyjs::enable("shapefile")
+      shinyjs::enable("shapefile_name")
+      shinyjs::enable("upload")
+      shinyjs::disable("existing_shapefile")
+      shinyjs::disable("load_existing")
+    } else {
+      shinyjs::disable("shapefile")
+      shinyjs::disable("shapefile_name")
+      shinyjs::disable("upload")
+      shinyjs::enable("existing_shapefile")
+      shinyjs::enable("load_existing")
+    }
   })
   
   observeEvent(input$shapefile, {

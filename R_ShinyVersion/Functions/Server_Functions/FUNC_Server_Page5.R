@@ -43,86 +43,59 @@ server_page5 <- function(input, output, session) {
   
   combined_data <- reactiveVal(NULL)
   
+ ###################
+  
+   # Define file paths in a list
+  file_paths2 <- list(
+    Water_Lakes = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water/Water_Lakes.csv",
+    Water_Rivers = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water/Water_Rivers.csv"
+  )
+  
+  
+  # Function to update a CSV file
+  update_csv <- function(file_path, questions, responses, persona_id) {
+    if (!file.exists(file_path)) {
+      stop(paste("The file", file_path, "does not exist."))
+    }
+    data <- read.csv(file_path, stringsAsFactors = FALSE, check.names = FALSE)
+    
+    data[[persona_id]] <- NA  # Initialize new column with NA
+    for (question in names(responses)) {
+      row_index <- which(data[, 1] == question)
+      if (length(row_index) > 0) {
+        data[row_index, persona_id] <- responses[question]
+      }
+    }
+    
+    write.csv(data, file_path, row.names = FALSE, na = "")
+  }
+  
+  # Define questions and responses in a list of lists
+  water_questions <- list(
+    Water_Lakes = paste0("Water_Lakes_", 1:6),
+    Water_Rivers = paste0("Water_Rivers_", 1:7)
+  )
+  
+  
+  # Event handler for submit button
   observeEvent(input$submit, {
+    # Ensure Persona ID is provided
     if (input$persona_id == "") {
       output$response <- renderText("Please enter a Persona ID.")
       return()
     }
     
-    # Paths to CSV files
-    file_path_Water_Lakes <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water/Water_Lakes.csv"
-    file_path_Water_Rivers <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water/Water_Rivers.csv"
-    
-    # Function to update a CSV file
-    update_csv <- function(file_path, responses, persona_id) {
-      if (!file.exists(file_path)) {
-        stop(paste("The file", file_path, "does not exist."))
-      }
-      data <- read.csv(file_path, stringsAsFactors = FALSE, check.names = FALSE)
-      
-      if (persona_id %in% colnames(data)) {
-        output$response <- renderText("This Persona ID already exists. Please use a different one.")
-        return()
-      }
-      
-      data[[persona_id]] <- NA  # Initialize new column with NA
-      for (question in names(responses)) {
-        row_index <- which(data[, 1] == question)
-        if (length(row_index) > 0) {
-          data[row_index, persona_id] <- responses[question]
-        }
-      }
-      
-      write.csv(data, file_path, row.names = FALSE, na = "")
+    # Loop through each file and update
+    for (key in names(file_paths2)) {
+      file_path <- file_paths2[[key]]
+      questions <- water_questions[[key]]
+      responses <- sapply(questions, function(q) input[[paste0(key, "_", substr(q, nchar(key) + 2, nchar(q)))]])
+      names(responses) <- questions
+      update_csv(file_path, questions, responses, input$persona_id)
     }
     
-    ###
-    # Water
-    # Water_Rivers responses
-    questions_Water_Rivers <- c(
-      "Water_Rivers_1",
-      "Water_Rivers_2",
-      "Water_Rivers_3",
-      "Water_Rivers_4",
-      "Water_Rivers_5",
-      "Water_Rivers_6",
-      "Water_Rivers_7"
-    )
-    responses_Water_Rivers <- c(
-      input$Water_Rivers_1,
-      input$Water_Rivers_2,
-      input$Water_Rivers_3,
-      input$Water_Rivers_4,
-      input$Water_Rivers_5,
-      input$Water_Rivers_6,
-      input$Water_Rivers_7
-    )
-    names(responses_Water_Rivers) <- questions_Water_Rivers
-    
-    # Water_Lakes responses
-    questions_Water_Lakes <- c(
-      "Water_Lakes_1",
-      "Water_Lakes_2",
-      "Water_Lakes_3",
-      "Water_Lakes_4",
-      "Water_Lakes_5",
-      "Water_Lakes_6"
-    )
-    responses_Water_Lakes <- c(
-      input$Water_Lakes_1,
-      input$Water_Lakes_2,
-      input$Water_Lakes_3,
-      input$Water_Lakes_4,
-      input$Water_Lakes_5,
-      input$Water_Lakes_6
-    )
-    names(responses_Water_Lakes) <- questions_Water_Lakes
-    
-    ###
-    
-    # Update CSV files
-    update_csv(file_path_Water_Lakes, responses_Water_Lakes, input$persona_id)
-    update_csv(file_path_Water_Rivers, responses_Water_Rivers, input$persona_id)
+  
+  #########################
     
     # Combine all data
     combined_data(combine_files(file_paths(), input$persona_id))

@@ -1,9 +1,9 @@
 # Define UI for Page 4
 ui_page4 <- function() {
-  hidden(
+#  hidden(
   div(
     id = "page4",
-    h2("Step2: Model Parameterization"),
+    h2("Step 3: Persona Parameterization"),
     sidebarLayout(
       sidebarPanel(
         
@@ -67,11 +67,12 @@ ui_page4 <- function() {
         numericInput("FIPS_I_LocalPathNetwork_2", "Paths Present", value = 0, min = 0, max = 10),
       
         actionButton("back3", "Back"),
-        actionButton("next4", "Next")
+        actionButton("next4", "Next"),
+        width = 6
       ),
       
       mainPanel()
     )
-  )
+#  )
   )
 }

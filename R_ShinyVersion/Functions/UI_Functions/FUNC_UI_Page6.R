@@ -1,9 +1,9 @@
 # Define UI for Page 6
 ui_page6 <- function() {
-  hidden(
+#  hidden(
     div(
       id = "page6",
-      h2("Step 3: Run the Recreational Potential Model"),
+      h2("Step 4: Run the Recreational Potential Model"),
       sidebarLayout(
         sidebarPanel(
             #style = "margin-top: 0; padding-top: 0;",
@@ -19,6 +19,6 @@ ui_page6 <- function() {
         )
       )
     )
-  )
+#  )
 }
 

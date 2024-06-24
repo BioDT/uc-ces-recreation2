@@ -1,17 +1,17 @@
 # Define UI for Page 2
 ui_page2 <- function() {
-  hidden(
+#  hidden(
   div(
     id = "page2",
-    h2("Step2: Model Parameterization"),
+    h2("Step 3: Persona Parameterization"),
     sidebarLayout(
       sidebarPanel(
         
         actionButton("back1", "Back"),
         actionButton("next2", "Next"),
         
-        textInput("persona_id", "Enter your Persona ID (2 digits, letters only):", value = ""),
-        tags$script("document.getElementById('persona_id').addEventListener('input', function(event) { this.value = this.value.toUpperCase(); });"),
+        #textInput("persona_id", "Please enter a suitable ID for your RP Persona:", value = ""),
+        #tags$script("document.getElementById('persona_id').addEventListener('input', function(event) { this.value = this.value.toUpperCase(); });"),
         
         h3(tags$b("SLSRA: The Suitability of land to support RP")),
         
@@ -128,11 +128,12 @@ ui_page2 <- function() {
         numericInput("SLSRA_WLA_2", "Land IS designated as a Wild Land Area", value = 0, min = 0, max = 10),
         
         actionButton("back1", "Back"),
-        actionButton("next2", "Next")
+        actionButton("next2", "Next"),
+        width = 6
       ),
       
       mainPanel()
     )
-  )
+#  )
   )
 }

@@ -1,9 +1,9 @@
 # Define UI for Page 3
 ui_page3 <- function() {
-  hidden(
+#  hidden(
   div(
     id = "page3",
-    h2("Step2: Model Parameterization"),
+    h2("Step 3: Persona Parameterization"),
     sidebarLayout(
       sidebarPanel(
         
@@ -111,11 +111,12 @@ ui_page3 <- function() {
         numericInput("FIPS_N_Slope_6", "Extremely steep slope (>30 %)", value = 0, min = 0, max = 10),
       
         actionButton("back2", "Back"),
-        actionButton("next3", "Next")
+        actionButton("next3", "Next"),
+        width = 6
       ),
       
       mainPanel()
     )
-  )
+#  )
   )
 }
