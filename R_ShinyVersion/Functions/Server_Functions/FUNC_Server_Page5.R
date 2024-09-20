@@ -26,13 +26,15 @@ server_page5 <- function(input, output, session) {
     return(combined_data)
   }
   
+  
   # Paths to search for CSV files
   folders <- c(
-    "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_I",
-    "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_N",
-    "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA",
-    "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water"
+    "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_I",
+    "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_N",
+    "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA",
+    "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/Water"
   )
+  
   
   # Find all CSV files in the specified folders recursively
   file_paths <- reactive({
@@ -43,12 +45,13 @@ server_page5 <- function(input, output, session) {
   
   combined_data <- reactiveVal(NULL)
   
+  
  ###################
   
    # Define file paths in a list
   file_paths2 <- list(
-    Water_Lakes = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water/Water_Lakes.csv",
-    Water_Rivers = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Water/Water_Rivers.csv"
+    Water_Lakes = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/Water/Water_Lakes.csv",
+    Water_Rivers = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/Water/Water_Rivers.csv"
   )
   
   
@@ -94,14 +97,14 @@ server_page5 <- function(input, output, session) {
       update_csv(file_path, questions, responses, input$persona_id)
     }
     
-  
+    
   #########################
     
     # Combine all data
     combined_data(combine_files(file_paths(), input$persona_id))
     
     # Export combined data to CSV with persona_id as filename
-    output_file_path <- paste0("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/output/Persona_Scores/", input$persona_id, ".csv")
+    output_file_path <- paste0("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/output/Persona_Scores/", input$persona_id, ".csv")
     write.csv(combined_data(), file = output_file_path, row.names = FALSE, na = "")
     
     output$response <- renderText("Thank you for your responses! They have been recorded. You can now download a csv of your responses.")

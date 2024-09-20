@@ -37,8 +37,8 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     print(paste("Boundary_name: ", Boundary_name))  # debug output
     print(paste("Score column: ", Score_column))  # debug output
     
-    input_folder <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input"
-    output_folder <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/output"
+    input_folder <- "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input"
+    output_folder <- "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/output"
     Raw_Shapefile <- file.path(input_folder, "Raw_Shapefile", shapefile_name)
     print(paste("Raw_Shapefile Path: ", Raw_Shapefile))  # debug output
     resolution <- 20
@@ -53,7 +53,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     library(scales)
     
     # Set working directory and source functions
-    setwd("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion")
+    setwd("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion")
     source("FUNC_Raster_Reclassifier.R")
     source("FUNC_Process_Raster_Proximity2.R")
     source("FUNC_Calculate_Euclidean_Distance.R")
@@ -66,6 +66,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     area_of_interest <- process_area_of_interest(Raw_Shapefile, Boundary_name, input_folder, resolution, max_distance)
     Raster_Empty <- area_of_interest$Raster_Empty
     mask_boundary <- area_of_interest$mask_boundary
+    print("Process area of interest COMPLETE")
     
     # Component 1: SLSRA
     raster_folder <- file.path(input_folder, "SLSRA")
@@ -74,6 +75,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     SLSRA_Norm <- normalise_rasters(modified_rasters, Raster_Empty)
     SLSRA_Norm <- mask(SLSRA_Norm, mask_boundary)
     writeRaster(SLSRA_Norm, file.path(output_folder, paste0("Component_SLSRA_", Boundary_name, "_", Score_column, ".tif")), format = "GTiff", overwrite = TRUE)
+    print("Process SLSRA COMPLETE")
     
     # Component 2: FIPS_N
     raster_folder <- file.path(input_folder, "FIPS_N")
@@ -92,6 +94,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     FIPS_N_Norm <- normalise_rasters(modified_rasters, Raster_Empty)
     FIPS_N_Norm <- mask(FIPS_N_Norm, mask_boundary)
     writeRaster(FIPS_N_Norm, file.path(output_folder, paste0("Component_FIPS_N_", Boundary_name, "_", Score_column, ".tif")), format = "GTiff", overwrite = TRUE)
+    print("Process FIPS_N COMPLETE")
     
     # Component 3: FIPS_I
     raster_folder <- file.path(input_folder, "FIPS_I")
@@ -104,6 +107,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     FIPS_I_Norm <- normalise_rasters(modified_rasters, Raster_Empty)
     FIPS_I_Norm <- mask(FIPS_I_Norm, mask_boundary)
     writeRaster(FIPS_I_Norm, file.path(output_folder, paste0("Component_FIPS_I_", Boundary_name, "_", Score_column, ".tif")), format = "GTiff", overwrite = TRUE)
+    print("Process FIPS_I COMPLETE")
     
     # Component 4: Water
     raster_folder <- file.path(input_folder, "Water")
@@ -116,6 +120,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     Water_Norm <- normalise_rasters(modified_rasters, Raster_Empty)
     Water_Norm <- mask(Water_Norm, mask_boundary)
     writeRaster(Water_Norm, file.path(output_folder, paste0("Component_Water_", Boundary_name, "_", Score_column, ".tif")), format = "GTiff", overwrite = TRUE)
+    print("Process Water COMPLETE")
     
     # Compute and normalise final RP Model
     raster_files <- list.files(output_folder, pattern = paste0("^Component_.*_", Boundary_name, "_", Score_column, "\\.tif$"), full.names = TRUE)
@@ -128,6 +133,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     BioDT_RP_Norm <- mask(BioDT_RP_Norm, mask_boundary)
     output_file <- file.path(output_folder, paste0("recreation_potential_", Boundary_name, "_", Score_column, ".tif"))
     writeRaster(BioDT_RP_Norm, output_file, format = "GTiff", overwrite = TRUE)
+    print("Process Normalized RP COMPLETE")
     
     # Store the output file path in the reactive value
     rv$output_file <- output_file
@@ -175,6 +181,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
               panel.grid = element_blank(), plot.title = element_text(hjust = 0.5), legend.key = element_blank()) +
         labs(title = paste("Recreation Potential for", Boundary_name), fill = "Recreational Potential")
     })
+    print("Print Normalized RP COMPLETE")
   })
   
   output$export_tif <- downloadHandler(
@@ -186,3 +193,4 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     }
   )
 }
+

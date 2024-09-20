@@ -1,0 +1,200 @@
+"Name","Description","Score"
+"FIPS_I_LocalPathNetwork_1","No Path",5
+"FIPS_I_LocalPathNetwork_2","Path",5
+"FIPS_I_NationalCycleNetwork_1","On Road: Paved Surface",5
+"FIPS_I_NationalCycleNetwork_2","Traffic Free: Unpaved Surface",5
+"FIPS_I_NationalCycleNetwork_3","Traffic Free: Paved Surface",5
+"FIPS_I_NationalCycleNetwork_4","On Road: Unpaved Surface",5
+"FIPS_I_NFERA_1","Other",5
+"FIPS_I_NFERA_2","Wildlife hide",5
+"FIPS_I_NFERA_3","Catering",5
+"FIPS_I_NFERA_4","BBQ Area",5
+"FIPS_I_NFERA_5","Shelter",5
+"FIPS_I_NFERA_6","Play area",3
+"FIPS_I_NFERA_7","Heritage Building",5
+"FIPS_I_NFERA_8","Ponds/Lakes",5
+"FIPS_I_NFERA_9","Education",5
+"FIPS_I_NFERA_10","Visitor Centre",5
+"FIPS_I_NFERA_11","Car Parking",5
+"FIPS_I_NFERA_12","Picnic",4
+"FIPS_I_NFERA_13","Toilet",5
+"FIPS_I_NFERA_14","Accommodation",5
+"FIPS_I_NFERA_15","Car parking - Layby",5
+"FIPS_I_NFERA_16","Events",5
+"FIPS_I_NFERA_17","Acitivty / Sports",5
+"FIPS_I_NFERR_10","Access road",5
+"FIPS_I_NFERR_7","Cross Country Ski",5
+"FIPS_I_NFERR_2","Cycling: Cross country",5
+"FIPS_I_NFERR_1","Cycling: Downhill",5
+"FIPS_I_NFERR_3","Cycling: Forest Road or similar",5
+"FIPS_I_NFERR_8","Equestrian",5
+"FIPS_I_NFERR_9","Forest Drive",5
+"FIPS_I_NFERR_4","Walking: Difficult",5
+"FIPS_I_NFERR_5","Walking: Easy",5
+"FIPS_I_NFERR_6","Walking: Moderate",5
+"FIPS_I_RoadsTracks_4","Minor / local road",5
+"FIPS_I_RoadsTracks_2","A Road",5
+"FIPS_I_RoadsTracks_1","Motorway",5
+"FIPS_I_RoadsTracks_5","Access roads / Track",5
+"FIPS_I_RoadsTracks_3","B Road",5
+"FIPS_N_Landform_1","Foothills",5
+"FIPS_N_Landform_2","Lochs",5
+"FIPS_N_Landform_3","Mountains",5
+"FIPS_N_Landform_4","Terraces",4
+"FIPS_N_Landform_5","Flood plain",5
+"FIPS_N_Landform_6","Beaches / Dunes",5
+"FIPS_N_Landform_7","Rocks / Scree",4
+"FIPS_N_Landform_8","Depressions",5
+"FIPS_N_Landform_9","Hills",5
+"FIPS_N_Landform_10","Lowlands",5
+"FIPS_N_Landform_11","Rock Walls",5
+"FIPS_N_Landform_12","Uplands",5
+"FIPS_N_Landform_13","Valley sides",5
+"FIPS_N_Landform_14","Valley bottom",5
+"FIPS_N_Landform_15","Built-up areas",5
+"FIPS_N_Landform_16","Saltings",5
+"FIPS_N_Landform_17","Hummocks / mounds / moraines",5
+"FIPS_N_NFI_1","Woodland_Assumed Woodland",5
+"FIPS_N_NFI_2","Woodland_Grass",5
+"FIPS_N_NFI_3","Woodland_Ground Prepared for Planting",5
+"FIPS_N_NFI_4","Woodland_Felled",5
+"FIPS_N_NFI_5","Woodland_Shrub Land",4
+"FIPS_N_NFI_6","Woodland_Young Trees",5
+"FIPS_N_NFI_7","Woodland_Mixed - predominantly Conifer",5
+"FIPS_N_NFI_8","Woodland_Broadleaved",5
+"FIPS_N_NFI_9","Woodland_Coppice",5
+"FIPS_N_NFI_10","Woodland_Low Density",5
+"FIPS_N_NFI_11","Woodland_Conifer",5
+"FIPS_N_NFI_12","Woodland_Mixed - predominantly Broadleaved",5
+"FIPS_N_NWSS_1","Native woodland: Native upland mixed deciduous woodland and scrub",5
+"FIPS_N_NWSS_2","Native woodland: Wet woodland",5
+"FIPS_N_NWSS_3","Native woodland: Non native",5
+"FIPS_N_NWSS_4","Native woodland: Unidentifiable type",5
+"FIPS_N_NWSS_5","Native woodland: Scrub",5
+"FIPS_N_NWSS_6","Native woodland: Clear fell",5
+"FIPS_N_NWSS_7","Native woodland: Lowland mixed deciduous woodland",5
+"FIPS_N_NWSS_8","Native woodland: Native pinewood",4
+"FIPS_N_NWSS_9","Nearly-native woodland: Native pinewood",5
+"FIPS_N_NWSS_10","Nearly-native woodland: Wet woodland",5
+"FIPS_N_NWSS_11","Nearly-native woodland: Non native",5
+"FIPS_N_NWSS_12","Nearly-native woodland: Clear fell",5
+"FIPS_N_NWSS_13","Nearly-native woodland: Unidentifiable type",5
+"FIPS_N_NWSS_14","Nearly-native woodland: Native upland mixed deciduous woodland",5
+"FIPS_N_NWSS_15","Nearly-native woodland: Lowland mixed deciduous woodland",5
+"FIPS_N_NWSS_16","Nearly-native woodland: Scrub",4
+"FIPS_N_NWSS_17","Open land habitat: Open land habitat",5
+"FIPS_N_NWSS_18","Plantations on Ancient Woodland Sites (PAWS): Native pinewood",5
+"FIPS_N_NWSS_19","Plantations on Ancient Woodland Sites (PAWS): Wet woodland",5
+"FIPS_N_NWSS_20","Plantations on Ancient Woodland Sites (PAWS): Non native",5
+"FIPS_N_NWSS_21","Plantations on Ancient Woodland Sites (PAWS): Unidentifiable type",5
+"FIPS_N_NWSS_22","Plantations on Ancient Woodland Sites (PAWS): Native upland mixed deciduous woodland",4
+"FIPS_N_NWSS_23","Plantations on Ancient Woodland Sites (PAWS): Lowland mixed deciduous woodland",5
+"FIPS_N_NWSS_24","Plantations on Ancient Woodland Sites (PAWS): Unidentified",5
+"FIPS_N_NWSS_25","Plantations on Ancient Woodland Sites (PAWS): Clear fell",5
+"FIPS_N_Soil_1","Peaty podzols",5
+"FIPS_N_Soil_2","Mineral podzols",5
+"FIPS_N_Soil_3","Peaty gleys",5
+"FIPS_N_Soil_4","Peat",5
+"FIPS_N_Soil_5","Mineral gleys",5
+"FIPS_N_Soil_6","Brown soils",5
+"FIPS_N_Soil_7","Montane soils",5
+"FIPS_N_Soil_8","Immature soils",5
+"FIPS_N_Soil_9","Alluvial soils",5
+"FIPS_N_Soil_10","Calcareous soils",5
+"FIPS_N_Soil_11","Built-up areas",5
+"FIPS_N_Soil_12","Lochs",5
+"FIPS_N_Slope_1","easy",5
+"FIPS_N_Slope_2","gentle slope",5
+"FIPS_N_Slope_3","medium slope",5
+"FIPS_N_Slope_4","steep slope",5
+"FIPS_N_Slope_5","very steep slope",5
+"FIPS_N_Slope_6","extremely steep slope",5
+"SLSRA_CP_1","Not Country Park",5
+"SLSRA_CP_2","Country Park",5
+"SLSRA_HLUA_1","Agriculture: Crofting & Smallholdings",5
+"SLSRA_HLUA_2","Agriculture: Modern large scale farming",5
+"SLSRA_HLUA_3","Energy, Extraction and Waste: Commercial mining and mineral extraction",5
+"SLSRA_HLUA_4","Energy, Extraction and Waste: Commercial power generation",5
+"SLSRA_HLUA_5","Energy, Extraction and Waste: Landfill",5
+"SLSRA_HLUA_6","Energy, Extraction and Waste: Traditional Peat Cutting",5
+"SLSRA_HLUA_7","Forestry: Managed Woodland",5
+"SLSRA_HLUA_8","Forestry: Plantation",4
+"SLSRA_HLUA_9","Historic designed landscapes",5
+"SLSRA_HLUA_10","Leisure and Recreation: Golf Course",4
+"SLSRA_HLUA_11","Leisure and Recreation: Recreation Area",5
+"SLSRA_HLUA_12","Leisure and Recreation: Ski Area",5
+"SLSRA_HLUA_13","Military Site",5
+"SLSRA_HLUA_14","Moorland and Rough Grazing",5
+"SLSRA_HLUA_15","Religious site",5
+"SLSRA_HLUA_16","Settlements: Historic town",4
+"SLSRA_HLUA_17","Settlements: Historic village",5
+"SLSRA_HLUA_18","Settlements: Industrial area",5
+"SLSRA_HLUA_19","Settlements: Urban area",5
+"SLSRA_HLUA_20","Transport infrastructure (Airports, railways, roads)",5
+"SLSRA_HLUA_21","Water: Freshwater",5
+"SLSRA_HLUA_22","Water: Reed beds",5
+"SLSRA_HLUA_23","Water: Seashore",4
+"SLSRA_HLUA_24","Water: Shellfish farm",5
+"SLSRA_HNV_1","Not HNV",5
+"SLSRA_HNV_2","HNV",4
+"SLSRA_LCM_1","Alpine and subalpine grassland",5
+"SLSRA_LCM_2","Arable land and market gardens",5
+"SLSRA_LCM_3","Arctic, alpine and subalpine scrub",5
+"SLSRA_LCM_4","Bare field / exposed soil",4
+"SLSRA_LCM_5","Base-rich fens and calcareous spring mires",5
+"SLSRA_LCM_6","Broadleaved deciduous woodland",5
+"SLSRA_LCM_7","Built-up area",5
+"SLSRA_LCM_8","Coastal dunes and sandy shore",5
+"SLSRA_LCM_9","Coastal shingle",5
+"SLSRA_LCM_10","Dry grassland",5
+"SLSRA_LCM_11","Freshwater",5
+"SLSRA_LCM_12","Inland cliffs, rock pavements and outcrops",5
+"SLSRA_LCM_13","Lines of trees, small planted woodlands, early-stage woodland and coppice",4
+"SLSRA_LCM_14","Littoral sediment / saltmarsh",5
+"SLSRA_LCM_15","Mesic grassland",5
+"SLSRA_LCM_16","Mixed deciduous and coniferous woodland",5
+"SLSRA_LCM_17","Non-native coniferous plantation",5
+"SLSRA_LCM_18","Raised and blanket bog",5
+"SLSRA_LCM_19","Riverine and fen scrubs",5
+"SLSRA_LCM_20","Rock cliffs, ledges and shores",5
+"SLSRA_LCM_21","Scots pine woodland",5
+"SLSRA_LCM_22","Screes",5
+"SLSRA_LCM_23","Seasonally wet and wet grassland",5
+"SLSRA_LCM_24","Temperate montane scrub",5
+"SLSRA_LCM_25","Temperate shrub heathland",5
+"SLSRA_LCM_26","Valley mires, poor fens and transition mires",4
+"SLSRA_LCM_27","Windthrown woodland",5
+"SLSRA_LCM_28","Woodland fringes and clearings and tall forb stands",5
+"SLSRA_NNR_1","Not NNR",5
+"SLSRA_NNR_2","NNR Reserve",5
+"SLSRA_NP_1","Not National Park",5
+"SLSRA_NP_2","National Park",5
+"SLSRA_NR_2","Nature Reserve",5
+"SLSRA_NR_1","Not Nature Reserve",5
+"SLSRA_RP_2","Regional Park",5
+"SLSRA_RP_1","Not Regional Park",5
+"SLSRA_RSPB_2","RSPB Reserve",5
+"SLSRA_RSPB_1","Not RSPB Reserve",5
+"SLSRA_SAC_2","SAC",5
+"SLSRA_SAC_1","Not SAC",5
+"SLSRA_SPA_2","SPA",4
+"SLSRA_SPA_1","Not SPA",5
+"SLSRA_SSSI_2","SSSI",0
+"SLSRA_SSSI_1","Not SSSI",5
+"SLSRA_SWT_2","SWT Reserve",5
+"SLSRA_SWT_1","Not SWT Reserve",5
+"SLSRA_WLA_2","Wild Land Areas",5
+"SLSRA_WLA_1","Not Wild Land Areas",5
+"Water_Lakes_1","Pond",5
+"Water_Lakes_2","Lochan",5
+"Water_Lakes_3","Small Lochs",5
+"Water_Lakes_4","Medium Lochs",5
+"Water_Lakes_5","Large Lochs",5
+"Water_Lakes_6","Major Lochs",5
+"Water_Rivers_1","Minor river or tributary",5
+"Water_Rivers_2","Unnamed minor stream or tributary",5
+"Water_Rivers_3","Major river or tributary",5
+"Water_Rivers_4","Named minor stream or tributary",5
+"Water_Rivers_5","Lake",5
+"Water_Rivers_6","Tidal river or estuary",5
+"Water_Rivers_7","Canal",5

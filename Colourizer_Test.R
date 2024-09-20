@@ -1,3 +1,4 @@
+# load required packages
 library(raster)
 library(ggplot2)
 library(scales)

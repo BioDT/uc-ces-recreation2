@@ -3,11 +3,11 @@ server_page3 <- function(input, output, session) {
   
   # Define file paths in a list
   file_paths <- list(
-    FIPS_N_Landform = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_Landform.csv",
-    FIPS_N_NFI = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_NFI.csv",
-    FIPS_N_NWSS = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_NWSS.csv",
-    FIPS_N_Soil = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_Soil.csv",
-    FIPS_N_Slope = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_N/slope/FIPS_N_Slope.csv"
+    FIPS_N_Landform = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_Landform.csv",
+    FIPS_N_NFI = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_NFI.csv",
+    FIPS_N_NWSS = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_NWSS.csv",
+    FIPS_N_Soil = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_N/FIPS_N_Soil.csv",
+    FIPS_N_Slope = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_N/slope/FIPS_N_Slope.csv"
   )
   
   
@@ -32,7 +32,7 @@ server_page3 <- function(input, output, session) {
   # Define questions and responses in a list of lists
   fips_n_questions <- list(
     FIPS_N_Landform = paste0("FIPS_N_Landform_", 1:17),
-    FIPS_N_NFI = paste0("FIPS_N_NFI_", 1:23),
+    FIPS_N_NFI = paste0("FIPS_N_NFI_", 1:12),
     FIPS_N_NWSS = paste0("FIPS_N_NWSS_", 1:25),
     FIPS_N_Soil = paste0("FIPS_N_Soil_", 1:12),
     FIPS_N_Slope = paste0("FIPS_N_Slope_", 1:6)

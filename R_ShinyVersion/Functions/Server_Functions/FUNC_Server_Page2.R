@@ -3,20 +3,20 @@ server_page2 <- function(input, output, session) {
   
   # Define file paths in a list
   file_paths <- list(
-    SLSRA_CP = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_CP.csv",
-    SLSRA_HLUA = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_HLUA.csv",
-    SLSRA_HNV = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_HNV.csv",
-    SLSRA_LCM = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_LCM.csv",
-    SLSRA_NNR = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_NNR.csv",
-    SLSRA_NP = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_NP.csv",
-    SLSRA_NR = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_NR.csv",
-    SLSRA_RP = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_RP.csv",
-    SLSRA_RSPB = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_RSPB.csv",
-    SLSRA_SAC = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_SAC.csv",
-    SLSRA_SPA = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_SPA.csv",
-    SLSRA_SSSI = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_SSSI.csv",
-    SLSRA_SWT = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_SWT.csv",
-    SLSRA_WLA = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/SLSRA/SLSRA_WLA.csv"
+    SLSRA_CP = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_CP.csv",
+    SLSRA_HLUA = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_HLUA.csv",
+    SLSRA_HNV = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_HNV.csv",
+    SLSRA_LCM = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_LCM.csv",
+    SLSRA_NNR = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_NNR.csv",
+    SLSRA_NP = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_NP.csv",
+    SLSRA_NR = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_NR.csv",
+    SLSRA_RP = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_RP.csv",
+    SLSRA_RSPB = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_RSPB.csv",
+    SLSRA_SAC = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_SAC.csv",
+    SLSRA_SPA = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_SPA.csv",
+    SLSRA_SSSI = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_SSSI.csv",
+    SLSRA_SWT = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_SWT.csv",
+    SLSRA_WLA = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/SLSRA/SLSRA_WLA.csv"
   )
   
   # Function to update a CSV file

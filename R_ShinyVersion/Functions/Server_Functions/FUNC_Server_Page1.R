@@ -2,7 +2,7 @@ server_page1 <- function(input, output, session, shapefile_name_global) {
   library(sf)
   
   # define the directory to contain raw shapefiles
-  upload_dir <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/Raw_Shapefile"
+  upload_dir <- "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/Raw_Shapefile"
   
   # Function to list all shapefiles recursively
   list_shapefiles <- function(dir) {

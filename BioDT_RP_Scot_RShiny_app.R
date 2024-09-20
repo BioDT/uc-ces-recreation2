@@ -1,26 +1,45 @@
-library(shiny)
-library(shinyjs)
-library(leaflet)
-library(sf)
-library(jsonlite)
+# Function to check, install, and load packages
+check_install_load <- function(pkg) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, dependencies = TRUE)
+  }
+  library(pkg, character.only = TRUE)
+}
+
+# List of packages to check, install, and load
+packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny")
+
+# Loop through each package
+for (pkg in packages_to_load) {
+  check_install_load(pkg)
+}
+
+
+# load packages
+#library(shiny)
+#library(shinyjs)
+#library(leaflet)
+#library(sf)
+#library(jsonlite)
+#library(tidyverse)
 
 # Source code for UI side
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page1.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page2.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page3.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page4.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page5.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page6.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page1b.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page1.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page2.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page3.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page4.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page5.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page6.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/UI_Functions/FUNC_UI_Page1b.R")
 
 # Source code for server side
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page1.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page2.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page3.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page4.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page5.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page6.R")
-source("/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page1b.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page1.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page2.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page3.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page4.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page5.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page6.R")
+source("/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/Functions/Server_Functions/FUNC_Server_Page1b.R")
 
 # Combine all UI components
 ui <- fluidPage(

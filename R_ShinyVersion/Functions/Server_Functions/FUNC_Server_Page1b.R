@@ -3,7 +3,7 @@ server_page1b <- function(input, output, session, persona_id_global, skip_to_pag
   library(shinyjs)
   
   # directory to store personas (the complete file)
-  persona_dir <- "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/output/Persona_Scores/"
+  persona_dir <- "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/output/Persona_Scores/"
   
   # function to list personas which already exist
   list_persona_files <- function(dir) {

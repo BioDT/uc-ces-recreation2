@@ -3,11 +3,11 @@ server_page4 <- function(input, output, session) {
   
   # Define file paths in a list
   file_paths <- list(
-    FIPS_I_RoadsTracks = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_RoadsTracks.csv",
-    FIPS_I_NationalCycleNetwork = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_NationalCycleNetwork.csv",
-    FIPS_I_NFERR = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_NFERR.csv",
-    FIPS_I_NFERA = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_NFERA.csv",
-    FIPS_I_LocalPathNetwork = "/data/notebooks/rstudio-rp2r/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_LocalPathNetwork.csv"
+    FIPS_I_RoadsTracks = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_RoadsTracks.csv",
+    FIPS_I_NationalCycleNetwork = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_NationalCycleNetwork.csv",
+    FIPS_I_NFERR = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_NFERR.csv",
+    FIPS_I_NFERA = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_NFERA.csv",
+    FIPS_I_LocalPathNetwork = "/data/notebooks/rstudio-rpmodel/testp/R_ShinyVersion/input/FIPS_I/FIPS_I_LocalPathNetwork.csv"
   )
   
   
