@@ -18,7 +18,7 @@ check_install_load <- function(pkg) {
 }
 
 # List of packages to check, install, and load
-packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "raster") #"foreach", "doParallel", 
+packages_to_load <- c("tidyverse", "leaflet", "leaflet.extras" , "sf", "jsonlite", "shinyjs", "shiny", "raster") #"foreach", "doParallel", "webshot", "htmlwidgets"
 
 # Loop through each package
 for (pkg in packages_to_load) {
@@ -74,7 +74,7 @@ server <- function(input, output, session) {
   all_form_data <- reactiveValues(data = data.frame(Name = character(), Response = character(), stringsAsFactors = FALSE))
   
   # Define the CSV file path to the master dataset containing raster values for reclassifying
-  csv_path <- paste0(home_folder, "input/MASTER_BIODT_RP_SCOT_SCORES_ALL.csv")
+  csv_path <- paste0(home_folder, "input/MASTER_BIODT_RP_SCOT_RASTER_VALUES.csv")
   
   # Load the existing CSV into form_data at the start
   form_data <- reactiveVal(read.csv(csv_path, stringsAsFactors = FALSE))
@@ -87,6 +87,28 @@ server <- function(input, output, session) {
   server_page4(input, output, session, all_form_data)
   server_page5(input, output, session, all_form_data, form_data, csv_path, home_folder)
   server_page6(input, output, session, shapefile_name_global, persona_id_global, home_folder)
+  
+  # Event handler for submit button
+  observeEvent(input$submit, {
+    
+    # Check if persona_id is empty (replace this with a real input check as needed)
+    if (is.null(input$persona_id) || input$persona_id == "") {
+      output$response <- renderText("Please enter a Persona ID.")
+      
+      # Reset button color to red if the condition is not met
+      session$sendCustomMessage(type = "resetButton", message = NULL)
+      
+      return()
+    }
+    
+    # If persona_id is provided, proceed with normal logic
+    output$response <- renderText("Form submitted successfully.")
+    
+    # Change button color to green once the button is pressed and valid input
+    session$sendCustomMessage(type = "buttonClick", message = NULL)
+    
+  })
+  
   
   # Navigation logic
   observeEvent(input$next1, {

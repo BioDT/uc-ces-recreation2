@@ -76,9 +76,9 @@ server_page1 <- function(input, output, session, shapefile_name_global, home_fol
     print(paste("CRS of the shapefile:", shp_crs))
     
     # Check if CRS is null or if it is a missing value (NA)
-    if (is.null(shp_crs) || is.na(shp_crs$epsg) || shp_crs$epsg != 4326) {
+    if (is.null(shp_crs) || is.na(shp_crs$epsg) || shp_crs$epsg != 4326) { #4326
       print("Attempting to transform CRS to WGS84.")
-      shp <- try(st_transform(shp, crs = 4326), silent = TRUE)
+      shp <- try(st_transform(shp, crs = 4326), silent = TRUE) #4326
       if (inherits(shp, "try-error")) {
         output$message <- renderText("Error transforming CRS to WGS84.")
         return()
@@ -119,9 +119,9 @@ server_page1 <- function(input, output, session, shapefile_name_global, home_fol
     print(paste("CRS of the existing shapefile:", shp_crs)) # debugging script
     
     # Check if CRS is null or if it is a missing value (NA)
-    if (is.null(shp_crs) || is.na(shp_crs$epsg) || shp_crs$epsg != 4326) {
+    if (is.null(shp_crs) || is.na(shp_crs$epsg) || shp_crs$epsg != 4326) { #4326
       print("Attempting to transform CRS to WGS84.") # debugging script
-      shp <- try(st_transform(shp, crs = 4326), silent = TRUE)
+      shp <- try(st_transform(shp, crs = 4326), silent = TRUE) #4326
       if (inherits(shp, "try-error")) {
         output$message <- renderText("Error transforming CRS to WGS84.")
         return()
@@ -135,7 +135,7 @@ server_page1 <- function(input, output, session, shapefile_name_global, home_fol
     output$map <- renderLeaflet({
       leaflet() %>%
         addTiles() %>%
-        setView(lng = -4.2026, lat = 57.1497, zoom = 6) %>%
+        setView(lng = -4.2026, lat = 57.1497, zoom = 7) %>%
         addPolygons(data = shp)
     })
     

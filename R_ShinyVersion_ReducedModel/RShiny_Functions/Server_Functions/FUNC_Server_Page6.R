@@ -178,12 +178,22 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
   # Define color scheme for 7 quantile categories
   category_colors <- c("#3b1f47", "#a892b2", "#c2b5a6", "#f7ef99", "#cbcb6d",  "#8a9f49", "#325e20")
   
+
   # Render Leaflet Map with Raster Overlay
   output$map_output <- renderLeaflet({
     req(rv$raster_data)
     
+    # Get the CRS of the raster
+    raster_data <- rv$raster_data
+    raster_crs <- crs(raster_data)  # Extract the CRS
+    
+    # Ensure CRS of raster data matches Leaflet's EPSG:3857
+    if (!is.null(raster_crs) && !is.na(raster_crs) && as.character(raster_crs) != "+init=epsg:3857") {
+      raster_data <- projectRaster(raster_data, crs = CRS("+init=epsg:3857"))
+    }
+    
     # Extract raster values and remove NAs
-    raster_vals <- values(rv$raster_data)
+    raster_vals <- values(raster_data)
     raster_vals <- raster_vals[!is.na(raster_vals)]
     
     # Calculate quantiles for 7 categories
@@ -194,47 +204,125 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     
     # Create base leaflet map
     leaflet() %>%
-      addTiles() %>%
+      addTiles(group = "OpenStreetMap") %>%  # Default OpenStreetMap tiles
+      addTiles(urlTemplate = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 
+               group = "Esri World Imagery", 
+               attribution = "Tiles © Esri")%>%
+      #addTiles() %>%
       addRasterImage(
-        rv$raster_data,
+        raster_data,
         colors = pal,
-        opacity = input$transparency
+        opacity = input$transparency,
+        project = TRUE,  # Ensure the raster is projected correctly
+        group = "Raster Overlay"
       ) %>%
       addLayersControl(
+        baseGroups = c("OpenStreetMap", "Esri World Imagery"),
+        #options = layersControlOptions(collapsed = FALSE),
         overlayGroups = c("Raster Overlay"),
         options = layersControlOptions(collapsed = FALSE)
+      ) %>%
+      addDrawToolbar(
+        targetGroup = "drawnShapes",  # Group for drawn shapes
+        polygonOptions = drawPolygonOptions(shapeOptions = drawShapeOptions(color = "blue")),
+        rectangleOptions = drawRectangleOptions(shapeOptions = drawShapeOptions(color = "red")),
+        circleOptions = drawCircleOptions(shapeOptions = drawShapeOptions(color = "green")),
+        editOptions = editToolbarOptions(edit = TRUE, remove = TRUE)
+      ) %>%
+      # Add measurement tool for distances and areas
+      addMeasure(
+       # position = "topright",
+        primaryLengthUnit = "kilometers",  # Set primary length unit to kilometers
+        primaryAreaUnit = "hectares",      # Set primary area unit to hectares
+        activeColor = "#3D535D",
+        completedColor = "#7D4479"
       )
   })
   
-  # Observe transparency slider and update raster opacity
-  observe({
-    if (is.null(rv$raster_data)) {
-      showNotification("Raster data is NULL. Cannot render map.", type = "error")
-    } else {
-      raster_vals <- values(rv$raster_data)
-      raster_vals <- raster_vals[!is.na(raster_vals)]
-      quantiles <- quantile(raster_vals, probs = seq(0, 1, length.out = 8), na.rm = TRUE)
-      pal <- colorBin(palette = category_colors, bins = quantiles, na.color = "transparent")
+  # calculate mean score values for drawn areas on map
+  observeEvent(input$map_output_draw_new_feature, {
+    feature <- input$map_output_draw_new_feature  # Get the drawn feature
+    
+    if (!is.null(feature)) {
+      shape_type <- feature$geometry$type
+      coords <- feature$geometry$coordinates
       
-      leafletProxy("map_output") %>%
-        clearImages() %>%
-        addRasterImage(
-          rv$raster_data,
-          colors = pal,
-          opacity = input$transparency
-        ) %>%
-        addLayersControl(
-          overlayGroups = c("Raster Overlay"),
-          options = layersControlOptions(collapsed = FALSE)
-        ) %>%
-        addLegend(
-          position = "bottomright",
-          pal = pal,
-          values = raster_vals,
-          title = "Recreational Potential"
-        )
+      # If the shape is a Polygon, extract raster values within the polygon
+      if (shape_type == "Polygon") {
+        # Convert the coordinates to a matrix
+        polygon_coords <- do.call(rbind, lapply(coords[[1]], function(coord) c(coord[[1]], coord[[2]])))
+        
+        # Create a simple features object
+        polygon_sf <- st_polygon(list(polygon_coords))
+        polygon_sf <- st_sfc(polygon_sf, crs = 4326)  # Assuming EPSG:4326 for original coordinates
+        
+        # Transform the CRS of the polygon to match the raster's CRS
+        projected_polygon <- st_transform(polygon_sf, crs = st_crs(rv$raster_data))
+        
+        # Extract raster values within the polygon
+        raster_values <- extract(rv$raster_data, as_Spatial(projected_polygon))  # Convert to Spatial
+        
+        # Calculate mean value, ensure values are numeric
+        if (is.null(raster_values) || length(raster_values) == 0 || all(is.na(raster_values))) {
+          mean_value <- NA
+        } else {
+          mean_value <- mean(unlist(raster_values), na.rm = TRUE)
+        }
+        
+        # Show result to the user
+        if (is.na(mean_value)) {
+          showNotification("No raster values found in the drawn polygon.", type = "warning")
+        } else {
+          showNotification(
+            paste("Mean raster value within polygon:", mean_value),
+            type = "message"
+          )
+        }
+      }
     }
   })
+  
+  # Handle editing of existing shapes
+  observeEvent(input$map_draw_edited_features, {
+    edited_features <- input$map_draw_edited_features  # Get edited features
+    # Example: Display information about the edited shapes
+    output$drawn_info <- renderPrint({
+      paste("Edited shapes:", toString(edited_features))
+    })
+  })
+  
+ 
+  # Observe clicks on the map to extract raster values
+  observeEvent(input$map_output_click, {
+    click <- input$map_output_click
+    
+    if (!is.null(click)) {
+      # Extract the clicked longitude and latitude
+      clicked_coords <- c(click$lng, click$lat)
+      
+      # Create a SpatialPoints object and ensure it matches the raster CRS
+      clicked_sp <- sp::SpatialPoints(matrix(clicked_coords, ncol = 2), 
+                                      proj4string = sp::CRS("+proj=longlat +datum=WGS84"))
+      raster_crs <- raster::crs(rv$raster_data)
+      
+      # Transform the clicked points to the raster's CRS if necessary
+      if (!raster::compareCRS(raster_crs, sp::CRS("+proj=longlat +datum=WGS84"))) {
+        clicked_sp <- sp::spTransform(clicked_sp, raster_crs)
+      }
+      
+      # Extract the raster value at the clicked location
+      raster_value <- raster::extract(rv$raster_data, clicked_sp)
+      
+      # Show the clicked coordinate and raster value in a notification
+      showNotification(
+        paste("Clicked at Longitude:", click$lng, 
+              "Latitude:", click$lat, 
+              "Raster Value:", raster_value),
+        type = "message"
+      )
+    }
+  })
+  
   
   # Export the raster data as a .tif file
   output$export_tif <- downloadHandler(
@@ -244,4 +332,7 @@ server_page6 <- function(input, output, session, shapefile_name_global, persona_
     content = function(file) {
       file.copy(rv$output_file, file)
     })
+  
+
+  
 }

@@ -48,11 +48,11 @@ ui_page5 <- function() {
        
        # Export, sumbit, fwd/back  buttons etc...
        # textInput("rename_persona_id", "Rename Persona ID (Optional where values have been edited)?", value = ""),
-        actionButton("back4", "Back"),
-        actionButton("submit", "Submit"),
-        downloadButton("export_responses", "Export Responses"),
-        textOutput("response"),
-        actionButton("next5", "Next"),
+       actionButton("submit", "Submit"),
+       downloadButton("export_responses", "Export Responses"),
+       textOutput("response"),
+       actionButton("back4", "Back"),
+       actionButton("next5", "Next"),
         width = 6
       ),
       

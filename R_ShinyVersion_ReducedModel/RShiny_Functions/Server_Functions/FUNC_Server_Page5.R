@@ -17,6 +17,7 @@ server_page5 <- function(input, output, session, all_form_data, form_data, csv_p
       output$response <- renderText("Please enter a Persona ID.")
       return()
     }
+      
     
     # Collect responses from the input fields
     all_responses <- unlist(lapply(water_questions, function(qs) sapply(qs, function(q) input[[q]])))
@@ -70,6 +71,7 @@ server_page5 <- function(input, output, session, all_form_data, form_data, csv_p
     output$response <- renderText("All responses saved and exported successfully!")
   })
   
+    
   # Download handler to export the final form_data as a CSV file
   output$export_responses <- downloadHandler(
     filename = function() {

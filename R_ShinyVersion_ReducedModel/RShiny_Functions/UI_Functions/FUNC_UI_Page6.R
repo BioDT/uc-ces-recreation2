@@ -12,6 +12,7 @@ ui_page6 <- function() {
       ),
       mainPanel(
         leafletOutput("map_output", height = 600),  # Changed plotOutput to leafletOutput
+        verbatimTextOutput("drawn_info"),  # To display drawn shape information
         textOutput("message")
       )
     )
