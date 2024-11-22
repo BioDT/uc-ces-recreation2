@@ -1,6 +1,6 @@
 # =============================================================
 # Project Name: BIODT
-# Last Updated: 2024-10-29
+# Last Updated: 2024-11-22
 #
 # Description of this version:
 # Modification to the folder structure and scripts to reduce run-time. Added input files with Rastspats with multiple layers,
@@ -10,7 +10,8 @@
 rm(list = ls())
 
 #set directory
-setwd("~/testp/R_ShinyVersion_ReducedModel")
+library(here)
+setwd(here::here())
 
 # Function to check, install, and load packages
 check_install_load <- function(pkg) {
