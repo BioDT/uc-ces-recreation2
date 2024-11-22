@@ -7,3 +7,6 @@ renv/
 .RData
 .Rproj.user/
 *.Rproj
+
+# Container
+*.sif

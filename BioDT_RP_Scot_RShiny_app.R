@@ -7,27 +7,38 @@
 # already standardized.
 # =============================================================
 
+library(here)
+library(tidyverse)
+library(leaflet)
+library(sf)
+library(jsonlite)
+library(shinyjs)
+library(shiny)
+library(terra)
+library(units)
+#library(parallel)
+
 rm(list = ls())
 
 #set directory
-library(here)
+
 setwd(here::here())
 
 # Function to check, install, and load packages
-check_install_load <- function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    install.packages(pkg, dependencies = TRUE)
-  }
-  library(pkg, character.only = TRUE)
-}
+#check_install_load <- function(pkg) {
+#  if (!requireNamespace(pkg, quietly = TRUE)) {
+#    install.packages(pkg, dependencies = TRUE)
+#  }
+#  library(pkg, character.only = TRUE)
+#}
 
 # List of packages to check, install, and load
-packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "terra", "units", "parallel")
+#packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "terra", "units", "parallel")
 
 # Loop through each package
-for (pkg in packages_to_load) {
-  check_install_load(pkg)
-}
+#for (pkg in packages_to_load) {
+#  check_install_load(pkg)
+#}
 
 
 #Load the paths and functions

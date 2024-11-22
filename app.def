@@ -1,0 +1,38 @@
+Bootstrap: docker
+From: rocker/shiny:4.4.1
+
+%files
+  /home/joe/github.com/BioDT/uc-ces-recreation2/renv.lock /srv/shiny-server/myapp/
+  /home/joe/github.com/BioDT/uc-ces-recreation2/BioDT_RP_Scot_RShiny_app.R /srv/shiny-server/myapp/
+  /home/joe/github.com/BioDT/uc-ces-recreation2/Functions /srv/shiny-server/myapp/
+  /home/joe/github.com/BioDT/uc-ces-recreation2/Data /srv/shiny-server/myapp/
+  
+%environment
+  export RENV_PATHS_LIBRARY=/srv/shiny-server/myapp/renv/library
+
+%post
+  # Install dependencies using apt
+  apt-get update && apt-get install -y \
+  build-essential \
+  libcurl4-openssl-dev \
+  libssl-dev \
+  libxml2-dev \
+  libgdal-dev \
+  libudunits2-dev \
+  libharfbuzz-dev \
+  libfribidi-dev
+
+  # Copy files into the container
+  mkdir -p /srv/shiny-server/myapp
+  cd /srv/shiny-server/myapp
+
+  # Install R packages
+  R -e "install.packages('renv', repos=c(CRAN ='http://cran.us.r-project.org'))"
+  R -e 'renv::restore()'
+
+%runscript
+  cd /srv/shiny-server/myapp
+  Rscript -e "shiny::runApp('BioDT_RP_Scot_RShiny_app.R')"
+
+%labels
+  MAINTAINER Joe
