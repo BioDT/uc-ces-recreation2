@@ -1,0 +1,9 @@
+Data
+datalabs
+
+# R, RStudio
+renv/
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
