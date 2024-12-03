@@ -1,32 +1,44 @@
 # =============================================================
 # Project Name: BIODT
-# Last Updated: 2024-10-29
+# Last Updated: 2024-11-22
 #
 # Description of this version:
 # Modification to the folder structure and scripts to reduce run-time. Added input files with Rastspats with multiple layers,
 # already standardized.
 # =============================================================
 
+library(here)
+library(tidyverse)
+library(leaflet)
+library(sf)
+library(jsonlite)
+library(shinyjs)
+library(shiny)
+library(terra)
+library(units)
+#library(parallel)
+
 rm(list = ls())
 
 #set directory
-setwd("~/testp/R_ShinyVersion_ReducedModel")
+
+setwd(here::here())
 
 # Function to check, install, and load packages
-check_install_load <- function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
-    install.packages(pkg, dependencies = TRUE)
-  }
-  library(pkg, character.only = TRUE)
-}
+#check_install_load <- function(pkg) {
+#  if (!requireNamespace(pkg, quietly = TRUE)) {
+#    install.packages(pkg, dependencies = TRUE)
+#  }
+#  library(pkg, character.only = TRUE)
+#}
 
 # List of packages to check, install, and load
-packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "terra", "units", "parallel")
+#packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "terra", "units", "parallel")
 
 # Loop through each package
-for (pkg in packages_to_load) {
-  check_install_load(pkg)
-}
+#for (pkg in packages_to_load) {
+#  check_install_load(pkg)
+#}
 
 
 #Load the paths and functions
