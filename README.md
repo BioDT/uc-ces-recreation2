@@ -22,7 +22,8 @@ git checkout lumi-container
 
 3. Get hold of the input data.
 
-Unless you have access to the DataLab, unfortunately this means asking one of the developers to send it to you (for now). _Please_ open an issue if this affects you!
+> [!IMPORTANT]
+> Unless you have access to the DataLab, unfortunately this means asking one of the developers to send it to you (for now). _Please_ open an issue if this affects you!
 
 4. Build the container
 
