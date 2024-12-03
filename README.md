@@ -20,13 +20,17 @@ cd uc-ces-recreation2
 git checkout lumi-container
 ```
 
-3. Build the container
+3. Get hold of the input data.
+
+Unless you have access to the DataLab, unfortunately this means asking one of the developers to send it to you (for now). _Please_ open an issue if this affects you!
+
+4. Build the container
 
 ```sh
 sudo singularity build app.sif app.def
 ```
 
-4. Run the container
+5. Run the container
 
 ```sh
 singularity run --bind ./Data:/srv/shiny-server/myapp/Data app.sif
@@ -39,7 +43,7 @@ Note: you may need to manually open the http URL in your browser.
 
 This assumes you have already set up your account on LUMI.
 
-1. Follow steps 1-3 above to build the container image _locally_
+1. Follow steps 1-4 above to build the container image _locally_.
 
 2. Copy the container image and input data to LUMI
 
