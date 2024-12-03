@@ -5,7 +5,9 @@ From: rocker/shiny:4.4.1
   /home/joe/github.com/BioDT/uc-ces-recreation2/renv.lock /srv/shiny-server/myapp/
   /home/joe/github.com/BioDT/uc-ces-recreation2/BioDT_RP_Scot_RShiny_app.R /srv/shiny-server/myapp/
   /home/joe/github.com/BioDT/uc-ces-recreation2/Functions /srv/shiny-server/myapp/
-  /home/joe/github.com/BioDT/uc-ces-recreation2/Data /srv/shiny-server/myapp/
+  
+  # NOTE: data directory must be linked at run-time to make it writable
+  # /home/joe/github.com/BioDT/uc-ces-recreation2/Data /srv/shiny-server/myapp/
   
 %environment
   export RENV_PATHS_LIBRARY=/srv/shiny-server/myapp/renv/library
