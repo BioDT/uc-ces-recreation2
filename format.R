@@ -7,7 +7,20 @@ setwd(here::here())
 
 # Skip UI_Functions because formatR does not format these nicely
 formatR::tidy_dir(
-  path="Functions",
+  path="Functions/RFunctions",
+  recursive=TRUE,
+  comment=TRUE,
+  blank=TRUE,
+  arrow=TRUE,
+  pipe=FALSE,
+  brace.newline=FALSE,
+  indent=4,
+  wrap=FALSE,
+  width.cutoff=80,
+  args.newline=TRUE,
+)
+formatR::tidy_dir(
+  path="Functions/RShiny_Functions/Server_Functions",
   recursive=TRUE,
   comment=TRUE,
   blank=TRUE,
