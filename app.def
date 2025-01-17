@@ -3,7 +3,7 @@ From: rocker/shiny:4.4.1
 
 %files
   renv.lock /srv/shiny-server/myapp/
-  BioDT_RP_Scot_RShiny_app.R /srv/shiny-server/myapp/
+  app.R /srv/shiny-server/myapp/
   Functions /srv/shiny-server/myapp/
   
   # NOTE: data directory must be linked at run-time to make it writable
@@ -34,7 +34,7 @@ From: rocker/shiny:4.4.1
 
 %runscript
   cd /srv/shiny-server/myapp
-  Rscript -e "shiny::runApp('BioDT_RP_Scot_RShiny_app.R')"
+  Rscript -e "shiny::runApp('app.R')"
 
 %labels
   MAINTAINER Joe
