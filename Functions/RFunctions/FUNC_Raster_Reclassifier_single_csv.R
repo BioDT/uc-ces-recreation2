@@ -1,38 +1,49 @@
 #step 3: make it faster
-reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id) {
+reclassify_rasters <- function(cropped_rasters, raster_folder, table, persona_id) {
 
 
-  if (!is.null(table)){
-    # Ensure the relevant columns are numeric
-    table$Raster_Val <- as.numeric(table$Raster_Val)
-    table[[persona_id]] <- as.numeric(table[[persona_id]])
+    if (!is.null(table)) {
+        # Ensure the relevant columns are numeric
+        table$Raster_Val <- as.numeric(table$Raster_Val)
+        table[[persona_id]] <- as.numeric(table[[persona_id]])
 
-    #Loop through each layer of the spatrast
-    for (alayer in seq_along(names(cropped_rasters))){
-      
-      #get the name
-      name_l <- names(cropped_rasters)[alayer]
-      
-      # Filter the table to get relevant rows for the current raster
-      raster_table <- table[grepl(paste0("^", name_l, "_?\\d*$"), table$Name), ]
+        #Loop through each layer of the spatrast
+        for (alayer in seq_along(names(cropped_rasters))) {
 
-      # Check if there are no matching rows, if so, skip
-      if (nrow(raster_table) == 0) {
-        cat("No matching reclassification data found in CSV for raster", raster_file, ". Skipping...\n")
-        next
-      }
+            #get the name
+            name_l <- names(cropped_rasters)[alayer]
 
-      #make a lookup table that specifies what to substitute with what
-      lookup <- setNames(raster_table[, persona_id], raster_table$Raster_Val)
+            # Filter the table to get relevant rows for the current raster
+            raster_table <- table[grepl(
+                paste0("^", name_l, "_?\\d*$"),
+                table$Name
+            ),
+                ]
 
-      #replace values
-      terra::values(cropped_rasters[[name_l]]) <- lookup[match(terra::values(cropped_rasters[[name_l]]), as.numeric(names(lookup)))]
-      terra::values(cropped_rasters[[name_l]])[is.na(terra::values(cropped_rasters[[name_l]]))] <- 0  # Set NA values to 0
+            # Check if there are no matching rows, if so, skip
+            if (nrow(raster_table) ==
+                0) {
+                cat(
+                  "No matching reclassification data found in CSV for raster", raster_file,
+                  ". Skipping...\n"
+              )
+                next
+            }
+
+            #make a lookup table that specifies what to substitute with what
+            lookup <- setNames(raster_table[, persona_id], raster_table$Raster_Val)
+
+            #replace values
+            terra::values(cropped_rasters[[name_l]]) <- lookup[match(
+                terra::values(cropped_rasters[[name_l]]),
+                as.numeric(names(lookup))
+            )]
+            terra::values(cropped_rasters[[name_l]])[is.na(terra::values(cropped_rasters[[name_l]]))] <- 0  # Set NA values to 0
+        }
+
+        # Return the modified rasters
+        return(cropped_rasters)
     }
-
-    # Return the modified rasters
-    return(cropped_rasters)
-  }
 }
 
 
@@ -51,14 +62,14 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 #       name_l <- names(cropped_rasters)[alayer]
 #       
 #       # Filter the table to get relevant rows for the current raster
-#       raster_table <- subset(table, grepl(paste0("^", name_l, "_?\\d*$"), table$Name))
+#       raster_table <- subset(table, grepl(paste0('^', name_l, '_?\\\\\\\\\\\\\\\\d*$'), table$Name))
 #       
 #       # Check if there are no matching rows, if so, skip
 #       if (nrow(raster_table) == 0) {
-#         cat("No matching reclassification data found in CSV for raster", raster_file, ". Skipping...\n")
+#         cat('No matching reclassification data found in CSV for raster', raster_file, '. Skipping...\\\\\\\\n')
 #         next
 #       }
-#       reclass_matrix <- as.matrix(raster_table[, c("Raster_Val", persona_id)])
+#       reclass_matrix <- as.matrix(raster_table[, c('Raster_Val', persona_id)])
 #       reclassified_raster <- terra::classify(cropped_rasters[[name_l]], rcl = reclass_matrix, right = NA)
 #       
 #       # Replace NA values with 0 for consistency
@@ -81,7 +92,7 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 #     table[[persona_id]] <- as.numeric(table[[persona_id]])
 #     
 #     lookup_tables <- lapply(names(cropped_rasters), function(raster_name) {
-#       raster_table <- table[grepl(paste0("^", raster_name, "_?\\d*$"), table$Name), ]
+#       raster_table <- table[grepl(paste0('^', raster_name, '_?\\\\\\\\\\\\\\\\d*$'), table$Name), ]
 #       setNames(raster_table[[persona_id]], raster_table$Raster_Val)
 #     })
 #     
@@ -148,11 +159,11 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 #       name_l <- names(cropped_rasters)[alayer]
 #       
 #       # Filter the table to get relevant rows for the current raster layer
-#       raster_table <- table[grepl(paste0("^", name_l, "_?\\d*$"), table$Name), ]
+#       raster_table <- table[grepl(paste0('^', name_l, '_?\\\\\\\\\\\\\\\\d*$'), table$Name), ]
 #       
 #       # Skip if no matching reclassification data is found
 #       if (nrow(raster_table) == 0) {
-#         cat("No matching reclassification data found for raster", name_l, ". Skipping...\n")
+#         cat('No matching reclassification data found for raster', name_l, '. Skipping...\\\\\\\\n')
 #         next
 #       }
 #       
@@ -173,11 +184,11 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 # reclassify_rasters_orig <- function(cropped_rasters, raster_folder, persona_folder, persona_id) {
 # 
 #   # Construct the path to the CSV file (assuming a fixed CSV filename)
-#   csv_file <- paste0(persona_folder, "/", persona_id, ".csv")
+#   csv_file <- paste0(persona_folder, '/', persona_id, '.csv')
 # 
 #   # Check if the CSV file exists
 #   if (!file.exists(csv_file)) {
-#     stop("CSV file not found in persona folder: ", csv_file)
+#     stop('CSV file not found in persona folder: ', csv_file)
 #   }
 # 
 #   # Load the CSV table
@@ -194,10 +205,10 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 #   #Loop through each raster file
 #   for (alayer in 1:length(names(cropped_rasters))){
 #     # Filter the CSV table to get relevant rows for the current raster
-#     raster_table <- table[grepl(paste0("^", names(cropped_rasters)[alayer], "_?\\d*$"), table$Name), ]
+#     raster_table <- table[grepl(paste0('^', names(cropped_rasters)[alayer], '_?\\\\\\\\\\\\\\\\d*$'), table$Name), ]
 #     # Check if there are matching rows
 #     if (nrow(raster_table) == 0) {
-#       cat("No matching reclassification data found in CSV for raster", raster_file, ". Skipping...\n")
+#       cat('No matching reclassification data found in CSV for raster', raster_file, '. Skipping...\\\\\\\\n')
 #       next
 #     }
 # 
@@ -221,11 +232,11 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 #   modified_rasters <- list()
 #   
 #   # Construct the path to the CSV file (assuming a fixed CSV filename)
-#   csv_file <- paste0(persona_folder, "/", persona_id, ".csv")
+#   csv_file <- paste0(persona_folder, '/', persona_id, '.csv')
 #   
 #   # Check if the CSV file exists
 #   if (!file.exists(csv_file)) {
-#     stop("CSV file not found in persona folder: ", csv_file)
+#     stop('CSV file not found in persona folder: ', csv_file)
 #   }
 #   
 #   # Load the CSV table
@@ -244,15 +255,15 @@ reclassify_rasters <- function(cropped_rasters, raster_folder, table,persona_id)
 #     # Get the cropped raster object
 #     r <- cropped_rasters[[raster_file]]
 #     
-#     # Extract the base filename from the raster file (remove .tif and suffix after "_")
-#     base_name <- gsub("(_\\d+)?\\.tif$", "", raster_file)
+#     # Extract the base filename from the raster file (remove .tif and suffix after '_')
+#     base_name <- gsub('(_\\\\\\\\\\\\\\\\d+)?\\\\\\\\\\\\\\\\.tif$', '', raster_file)
 #     
 #     # Filter the CSV table to get relevant rows for the current raster
-#     raster_table <- table[grepl(paste0("^", base_name, "_?\\d*$"), table$Name), ]
+#     raster_table <- table[grepl(paste0('^', base_name, '_?\\\\\\\\\\\\\\\\d*$'), table$Name), ]
 #     
 #     # Check if there are matching rows
 #     if (nrow(raster_table) == 0) {
-#       cat("No matching reclassification data found in CSV for raster", raster_file, ". Skipping...\n")
+#       cat('No matching reclassification data found in CSV for raster', raster_file, '. Skipping...\\\\\\\\n')
 #       next
 #     }
 #     
