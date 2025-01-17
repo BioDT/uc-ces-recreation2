@@ -1,3 +1,20 @@
+# BioDT Recreation Potential model
+
+## For developers
+
+### Before you commit changes
+
+Please run the `format.R` script from within RStudio or from the terminal using
+
+```sh
+Rscript format.R
+```
+
+Hopefully this should format your code without crashing.
+Note that the `formatR` tool does not work for in-line comments that occur within an expression (see [here](https://yihui.org/formatr/#inline-comments-after-an-incomplete-expression-or) for an explanation.
+
+
+
 # Containerised Recreation Potential model
 
 This experimental branch serves as a proof of principle for containerising the RP model for running on the [LUMI computing cluster](https://lumi-supercomputer.eu/).
