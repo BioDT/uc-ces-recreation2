@@ -1,10 +1,6 @@
 # =============================================================
 # Project Name: BIODT
-# Last Updated: 2024-11-22
-#
-# Description of this version:
-# Modification to the folder structure and scripts to reduce run-time. Added input files with Rastspats with multiple layers,
-# already standardized.
+# Last Updated: 2025-01-19 by jmarshrossney
 # =============================================================
 
 library(here)
@@ -14,6 +10,7 @@ library(sf)
 library(jsonlite)
 library(shinyjs)
 library(shiny)
+library(shinymanager)
 library(terra)
 library(units)
 #library(parallel)
@@ -90,8 +87,25 @@ ui <- fluidPage(
   )
 )
 
+credentials <- data.frame(
+  user = Sys.getenv("APP_USERNAME"),
+  password = Sys.getenv("APP_PASSWORD")
+)
+
+# Add password authorisation
+ui <- secure_app(ui)
+
 # Define main server logic
 server <- function(input, output, session) {
+
+  # Check credentials
+  # See https://datastorm-open.github.io/shinymanager/
+  res_auth <- secure_server(
+    check_credentials = check_credentials(credentials)
+  )
+  output$auth_output <- renderPrint({
+    reactiveValuesToList(res_auth)
+  })
   
   # Initialize reactive values for storing form data
   shapefile_name_global <- reactiveValues(input_text = NULL)
