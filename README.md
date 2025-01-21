@@ -24,7 +24,7 @@ rsconnect::connectApiUser(server="connect-apps.ceh.ac.uk", account="<username>",
 rsconnect::deployApp(appDir=".")
 ```
 
-This will take a long time since it needs to upload a couple of gigabytes of data.
+This will take a long time since it needs to upload a couple of gigabytes of data. If you do not have access to this data, please contact Joe MR.
 
 You can repeat these steps if you make any changes.
 
