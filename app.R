@@ -74,8 +74,24 @@ source(paste0(home_folder, folder_utils_functions, "FUNC_other_functions.R"))
 
 # Combine all UI components
 ui <- fluidPage(
-  titlePanel("BioDT - Scotland Recreational Model"),
+  # Add title, contact address and privacy notice in combined title panel + header
+  # TODO: add UKCEH logo
+  fluidRow(
+    style = "background-color: #f8f9fa;",
+    column(8, titlePanel("BioDT - Scotland Recreational Model")),
+    column(4,
+      tags$div(
+        style = "padding: 10px; text-align: right;",
+        div(
+          "Information about how we process your data can be found in our ",
+          tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice", target = "_blank"),
+          ". For further information, please contact Dr Jan Dick, jand@ceh.ac.uk.")
+      )
+    )
+  ),
+
   useShinyjs(),  # Initialize shinyjs
+  
   tabsetPanel(id = "nav_panel",
               tabPanel("Area of Interest", ui_page1()),
               tabPanel("Select Persona", ui_page1b()),
@@ -84,7 +100,7 @@ ui <- fluidPage(
               tabPanel("FIPS_I", ui_page4()),
               tabPanel("Water", ui_page5()),
               tabPanel("Model Run", ui_page6())
-  )
+  ),
 )
 
 credentials <- data.frame(
