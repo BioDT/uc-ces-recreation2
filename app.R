@@ -1,6 +1,6 @@
 # =============================================================
 # Project Name: BIODT
-# Last Updated: 2025-01-19 by jmarshrossney
+# Last Updated: 2025-01-21 by jmarshrossney
 # =============================================================
 
 library(bslib)
@@ -22,6 +22,15 @@ setwd(here::here())
 
 # UKCEH theming
 devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
+
+# Modify theme so buttons are visible...
+UKCEH_theme <- bs_add_rules(
+  UKCEH_theme,
+  ".btn {
+    color: black;
+    border-color: darkgrey; 
+  }"
+)
 
 # Function to check, install, and load packages
 #check_install_load <- function(pkg) {
