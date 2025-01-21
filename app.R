@@ -3,23 +3,25 @@
 # Last Updated: 2025-01-19 by jmarshrossney
 # =============================================================
 
+library(bslib)
 library(here)
-library(tidyverse)
-library(leaflet)
-library(sf)
 library(jsonlite)
-library(shinyjs)
+library(leaflet)
 library(shiny)
+library(shinyjs)
 library(shinymanager)
+library(sf)
+library(tidyverse)
 library(terra)
 library(units)
 #library(parallel)
 
 rm(list = ls())
 
-#set directory
-
 setwd(here::here())
+
+# UKCEH theming
+devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
 
 # Function to check, install, and load packages
 #check_install_load <- function(pkg) {
@@ -74,11 +76,12 @@ source(paste0(home_folder, folder_utils_functions, "FUNC_other_functions.R"))
 
 # Combine all UI components
 ui <- fluidPage(
+  theme = UKCEH_theme, 
+
   # Add title, contact address and privacy notice in combined title panel + header
-  # TODO: add UKCEH logo
   fluidRow(
     style = "background-color: #f8f9fa;",
-    column(8, titlePanel("BioDT - Scotland Recreational Model")),
+    column(8, UKCEH_titlePanel("BioDT - Scotland Recreational Model")),
     column(4,
       tags$div(
         style = "padding: 10px; text-align: right;",
