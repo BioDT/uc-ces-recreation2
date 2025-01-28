@@ -24,6 +24,9 @@ server_page1b <- function(
             } else if (grepl("\\s", input$persona_id)) {
                 output$response_sidebar <- renderText("Spaces are not allowed in the Persona ID name, use \"_\" instead")
                 return()
+            } else if (grepl("^_", input$persona_id)) {
+                output$response_sidebar <- renderText("Leading underscores are not allowed in the Persona ID name")
+                return()
             }
 
             # create a local variable for peraons

@@ -144,7 +144,7 @@ server <- function(input, output, session) {
                                                     stringsAsFactors = FALSE)
                                   )
   # Define the CSV file path to the master dataset containing raster values for reclassifying
-  csv_path <- paste0(home_folder, "Data/input/BIODT_RP_SCOT_SCORES_ALL.csv")
+  csv_path <- paste0(home_folder, "Data/input/MASTER_BIODT_RP_SCOT_RASTER_VALUES.csv")
   
   # Load the existing CSV into form_data at the start
   form_data <- reactiveVal(read.csv(csv_path, stringsAsFactors = FALSE))
@@ -231,6 +231,10 @@ server <- function(input, output, session) {
   observeEvent(input$back5, {
     updateTabsetPanel(session, "nav_panel", selected = "Water")
   })
+
+  # This helps with debugging
+  options(shiny.fullstacktrace=TRUE)
+
 }
 
 # Run the application 
