@@ -14,6 +14,22 @@ Hopefully this should format your code without crashing.
 Note that the `formatR` tool does not work for in-line comments that occur within an expression (see [here](https://yihui.org/formatr/#inline-comments-after-an-incomplete-expression-or) for an explanation.
 
 
+## Posit Connect
+
+Probably the easiest way to publish to Posit Connect is to install the R package `rsconnect` and run the following commands from the root of the repository:
+
+```R
+rsconnect::addServer("https://connect-apps.ceh.ac.uk", name="connect-apps.ceh.ac.uk")
+rsconnect::connectApiUser(server="connect-apps.ceh.ac.uk", account="<username>", apiKey="<api key>")
+rsconnect::deployApp(appDir=".")
+```
+
+This will take a long time since it needs to upload a couple of gigabytes of data. If you do not have access to this data, please contact Joe MR.
+
+You can repeat these steps if you make any changes.
+
+See the [documentation](https://connect-apps.ceh.ac.uk/__docs__/user/publishing-r/) for further guidance (requires account with UKCEH Posit Connect).
+
 
 # Containerised Recreation Potential model
 

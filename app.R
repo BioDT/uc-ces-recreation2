@@ -1,28 +1,36 @@
 # =============================================================
 # Project Name: BIODT
-# Last Updated: 2024-11-22
-#
-# Description of this version:
-# Modification to the folder structure and scripts to reduce run-time. Added input files with Rastspats with multiple layers,
-# already standardized.
+# Last Updated: 2025-01-21 by jmarshrossney
 # =============================================================
 
+library(bslib)
 library(here)
-library(tidyverse)
-library(leaflet)
-library(sf)
 library(jsonlite)
-library(shinyjs)
+library(leaflet)
 library(shiny)
+library(shinyjs)
+library(shinymanager)
+library(sf)
+library(tidyverse)
 library(terra)
 library(units)
 #library(parallel)
 
 rm(list = ls())
 
-#set directory
-
 setwd(here::here())
+
+# UKCEH theming
+devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
+
+# Modify theme so buttons are visible...
+UKCEH_theme <- bs_add_rules(
+  UKCEH_theme,
+  ".btn {
+    color: black;
+    border-color: darkgrey; 
+  }"
+)
 
 # Function to check, install, and load packages
 #check_install_load <- function(pkg) {
@@ -77,8 +85,25 @@ source(paste0(home_folder, folder_utils_functions, "FUNC_other_functions.R"))
 
 # Combine all UI components
 ui <- fluidPage(
-  titlePanel("BioDT - Scotland Recreational Model"),
+  theme = UKCEH_theme, 
+
+  # Add title, contact address and privacy notice in combined title panel + header
+  fluidRow(
+    style = "background-color: #f8f9fa;",
+    column(8, UKCEH_titlePanel("BioDT - Scotland Recreational Model")),
+    column(4,
+      tags$div(
+        style = "padding: 10px; text-align: right;",
+        div(
+          "Information about how we process your data can be found in our ",
+          tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice", target = "_blank"),
+          ". For further information, please contact Dr Jan Dick, jand@ceh.ac.uk.")
+      )
+    )
+  ),
+
   useShinyjs(),  # Initialize shinyjs
+  
   tabsetPanel(id = "nav_panel",
               tabPanel("Area of Interest", ui_page1()),
               tabPanel("Select Persona", ui_page1b()),
@@ -87,11 +112,28 @@ ui <- fluidPage(
               tabPanel("FIPS_I", ui_page4()),
               tabPanel("Water", ui_page5()),
               tabPanel("Model Run", ui_page6())
-  )
+  ),
 )
+
+credentials <- data.frame(
+  user = Sys.getenv("APP_USERNAME"),
+  password = Sys.getenv("APP_PASSWORD")
+)
+
+# Add password authorisation
+ui <- secure_app(ui)
 
 # Define main server logic
 server <- function(input, output, session) {
+
+  # Check credentials
+  # See https://datastorm-open.github.io/shinymanager/
+  res_auth <- secure_server(
+    check_credentials = check_credentials(credentials)
+  )
+  output$auth_output <- renderPrint({
+    reactiveValuesToList(res_auth)
+  })
   
   # Initialize reactive values for storing form data
   shapefile_name_global <- reactiveValues(input_text = NULL)
@@ -102,7 +144,7 @@ server <- function(input, output, session) {
                                                     stringsAsFactors = FALSE)
                                   )
   # Define the CSV file path to the master dataset containing raster values for reclassifying
-  csv_path <- paste0(home_folder, "Data/input/BIODT_RP_SCOT_SCORES_ALL.csv")
+  csv_path <- paste0(home_folder, "Data/input/MASTER_BIODT_RP_SCOT_RASTER_VALUES.csv")
   
   # Load the existing CSV into form_data at the start
   form_data <- reactiveVal(read.csv(csv_path, stringsAsFactors = FALSE))
@@ -189,6 +231,10 @@ server <- function(input, output, session) {
   observeEvent(input$back5, {
     updateTabsetPanel(session, "nav_panel", selected = "Water")
   })
+
+  # This helps with debugging
+  options(shiny.fullstacktrace=TRUE)
+
 }
 
 # Run the application 
