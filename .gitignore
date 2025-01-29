@@ -1,5 +1,6 @@
 # R, RStudio
 renv/
+.Rprofile
 .Rhistory
 .RData
 .Rproj.user/

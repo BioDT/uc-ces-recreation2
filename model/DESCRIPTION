@@ -16,6 +16,16 @@ Description: This package provides the BioDT Recreational Potential Model,
     represents what we call the 'recreational potential' for each point or
     pixel in the area considered.
 License: MIT + file ../LICENSE
+Depends:
+    R (>= 4.4.2)
+Imports:
+    terra,
+    raster
+Suggests:
+    devtools,
+    usethis,
+    lintr,
+    styler
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
