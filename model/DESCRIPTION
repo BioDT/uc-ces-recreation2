@@ -20,12 +20,14 @@ Depends:
     R (>= 4.4.2)
 Imports:
     terra,
-    raster
+    raster,
+    readr
 Suggests:
     devtools,
     usethis,
     lintr,
-    styler
+    styler,
+    testthat
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

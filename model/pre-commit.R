@@ -1,3 +1,5 @@
+testthat::test_dir("tests/testthat")
+
 style <- styler::tidyverse_style(
     indent_by = 4L,
     start_comments_with_one_space = TRUE
@@ -5,8 +7,8 @@ style <- styler::tidyverse_style(
 
 # TODO: apply to the entire package
 styler::style_file(
-    "R/FUNC_Calculate_Euclidean_Distance.R",
+    "R/io.R",
     transformers = style
 )
 
-lintr::lint("R/FUNC_Calculate_Euclidean_Distance.R")
+lintr::lint("R/io.R")
