@@ -7,8 +7,8 @@ style <- styler::tidyverse_style(
 
 # TODO: apply to the entire package
 styler::style_file(
-    "R/io.R",
+    "R/persona.R",
     transformers = style
 )
 
-lintr::lint("R/io.R")
+lintr::lint("R/persona.R")

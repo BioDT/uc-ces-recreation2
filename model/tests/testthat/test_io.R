@@ -2,7 +2,7 @@ library(readr)
 library(testthat)
 
 # TODO: import package instead of directly sourcing
-source("../../R/io.R")
+source("../../R/persona.R")
 
 # Test that a single persona can be saved and re-loaded
 test_that("saving and loading a single persona", {

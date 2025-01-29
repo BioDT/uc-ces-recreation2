@@ -1,5 +1,13 @@
 library(readr)
 
+
+.validate_persona <- function(persona) {
+    # TODO:
+    # * Check length ?
+    # * Check all integers between 0 and 10?
+    return()
+}
+
 #' Load Persona
 #'
 #' Loads a single persona from a csv file containing one or more personas.
@@ -32,6 +40,8 @@ load_persona <- function(csv_path, name = NULL) {
 
     # All values should be integers anyway, so let's cast the type
     persona <- as.integer(persona)
+
+    # TODO: should we attach this to the contents of `config.csv` as a dataframe?
 
     return(persona)
 }
