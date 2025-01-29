@@ -1,5 +1,29 @@
 library(readr)
 
+# TODO: sort out paths so this can be run from wherever
+DEFAULT_CONFIG <<- "data/config.csv"
+
+#' Load configuration from file
+#'
+#' @param config_path `character` Optional path to non-default configuration file
+load_config <- function(config_path = NULL) {
+    if (is.null(config_path)) {
+        config_path <- DEFAULT_CONFIG
+    }
+
+    # Load config, type casting each column
+    loaded_config <- read.csv(config_path, colClasses = c(
+        "Component" = "character",
+        "Dataset" = "character",
+        "Name" = "character",
+        "Description" = "character",
+        "Raster_Val" = "numeric"
+    ))
+
+    # TODO: check num rows, no additional cols
+
+    return(loaded_config)
+}
 
 .validate_persona <- function(persona) {
     # TODO:
@@ -72,4 +96,35 @@ save_persona <- function(persona, csv_path, name) {
 
     message(paste0("'Writing persona to file '", csv_path, "' under name '", name))
     write_csv(df, csv_path)
+}
+
+
+#' Load a cropped raster
+#'
+#' @description
+#' Load a cropped raster from a file
+#'
+#' @details
+#' Details...
+#'
+#' @param raster_path `character` Path to a raster file to load
+#' @param crop_area A SpatExtent or another object with a SpatExtent
+#'
+#' @examples
+#' load_raster("path/to/raster.tif", terra::vect("path/to/shapefile.shp"))
+#' load_raster("path/to.raster.tif", terra::ext(xmin, xmax, ymin, ymax))
+load_raster <- function(raster_path, crop_area) {
+    # Lazy load raster from file
+    raster <- terra::rast(raster_path)
+
+    # Crop using either a shapefile or SpatExtent
+    raster <- terra::crop(raster, crop_area)
+
+    # If crop_area is a vector we also need to mask, since
+    # terra::crop only restricts to the bounding box of the vector
+    if (inherits(crop_area, "SpatVector")) {
+        raster <- terra::mask(raster, crop_area)
+    }
+
+    return(raster)
 }
