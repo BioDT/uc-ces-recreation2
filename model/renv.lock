@@ -61,10 +61,10 @@
     },
     "Rcpp": {
       "Package": "Rcpp",
-      "Version": "1.0.13",
+      "Version": "1.0.14",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "f27411eb6d9c3dada5edd444b8416675",
+      "Hash": "e7bdd9ee90e96921ca8a0f1972d66682",
       "Requirements": []
     },
     "askpass": {
@@ -611,14 +611,6 @@
         "rlang"
       ]
     },
-    "lattice": {
-      "Package": "lattice",
-      "Version": "0.22-6",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "cc5ac1ba4c238c7ca9fa6a87ca11a7e2",
-      "Requirements": []
-    },
     "lazyeval": {
       "Package": "lazyeval",
       "Version": "0.2.2",
@@ -898,18 +890,6 @@
       "Hash": "5e3c5dc0b071b21fa128676560dbe94d",
       "Requirements": []
     },
-    "raster": {
-      "Package": "raster",
-      "Version": "3.6-26",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "7d6eda494f34a644420ac1bfd2a8023a",
-      "Requirements": [
-        "Rcpp",
-        "sp",
-        "terra"
-      ]
-    },
     "rcmdcheck": {
       "Package": "rcmdcheck",
       "Version": "1.4.0",
@@ -1114,16 +1094,6 @@
       "Hash": "5f5a7629f956619d519205ec475fe647",
       "Requirements": []
     },
-    "sp": {
-      "Package": "sp",
-      "Version": "2.1-4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "75940133cca2e339afce15a586f85b11",
-      "Requirements": [
-        "lattice"
-      ]
-    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.8.4",
@@ -1187,10 +1157,10 @@
     },
     "terra": {
       "Package": "terra",
-      "Version": "1.7-78",
+      "Version": "1.8-15",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "8f020def0792119cb98bd8f696dab22d",
+      "Hash": "440eba7fd9e32cf70194c371b0104ab2",
       "Requirements": [
         "Rcpp"
       ]

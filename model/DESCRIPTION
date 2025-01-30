@@ -7,7 +7,7 @@ Authors@R:
 	person("Chris", "Andrews", role = c("aut")),
 	person("Simon", "Rolph", role = c("aut")),
 	person("Maddalena", "Tigli", role = c("aut")),
-	person("Joe", "Marsh Rossney", role = c("aut", "cre")),
+	person("Joe", "Marsh Rossney", email = "17361029+jmarshrossney@users.noreply.github.com", role = c("aut", "cre"))
     )
 Description: This package provides the BioDT Recreational Potential Model,
     which was developed by scientists at the UK Centre for Ecology & Hydrology.
@@ -20,15 +20,14 @@ Depends:
     R (>= 4.4.2)
 Imports:
     dplyr,
-    terra,
-    raster,
-    readr
+    readr,
+    terra
 Suggests:
     devtools,
-    usethis,
     lintr,
     styler,
-    testthat
+    testthat,
+    usethis
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

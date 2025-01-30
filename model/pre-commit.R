@@ -5,10 +5,8 @@ style <- styler::tidyverse_style(
     start_comments_with_one_space = TRUE
 )
 
-# TODO: apply to the entire package
-styler::style_file(
-    "R/io.R",
+styler::style_pkg(
     transformers = style
 )
 
-lintr::lint("R/io.R")
+lintr::lint_package()

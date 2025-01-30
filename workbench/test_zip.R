@@ -1,8 +1,9 @@
 library(readr)
 library(dplyr)
 
+library(model)
+
 # TODO: import package instead of directly sourcing
-source("R/io.R")
 
 slsra <- load_raster("../Data/input/Processed_Data/SLSRA.tif", "../Data/input/Raw_Shapefile/Bush/Bush.shp")
 fips_n <- load_raster("../Data/input/Processed_Data/FIPS_N.tif", "../Data/input/Raw_Shapefile/Bush/Bush.shp")

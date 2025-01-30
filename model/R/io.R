@@ -1,18 +1,18 @@
-library(readr)
-
-# TODO: sort out paths so this can be run from wherever
-DEFAULT_CONFIG <<- "data/config.csv"
+# default_config <- system.file("extdata", "config.csv", package = "model")
+default_config <- "../inst/extdata/config.csv"
 
 #' Load configuration from file
 #'
 #' @param config_path `character` Optional path to non-default configuration file
+#'
+#' @export
 load_config <- function(config_path = NULL) {
     if (is.null(config_path)) {
-        config_path <- DEFAULT_CONFIG
+        config_path <- default_config
     }
 
     # Load config, type casting each column
-    loaded_config <- read.csv(config_path, colClasses = c(
+    loaded_config <- readr::read_csv(config_path, colClasses = c(
         "Component" = "character",
         "Dataset" = "character",
         "Name" = "character",
@@ -45,7 +45,7 @@ load_config <- function(config_path = NULL) {
 #'
 #' @export
 load_persona <- function(csv_path, name = NULL) {
-    loaded_csv <- read.csv(csv_path)
+    loaded_csv <- readr::read_csv(csv_path)
 
     if (ncol(loaded_csv) == 0) {
         stop("Error: the persona file is empty")
@@ -84,7 +84,7 @@ load_persona <- function(csv_path, name = NULL) {
 save_persona <- function(persona, csv_path, name) {
     if (file.exists(csv_path)) {
         message(paste0("'File '", csv_path, "' exists. The persona will be appended."))
-        df <- read_csv(csv_path)
+        df <- readr::read_csv(csv_path)
 
         # NOTE: should we throw a warning or error for overwriting an existing col?
         df[[name]] <- persona
@@ -95,7 +95,7 @@ save_persona <- function(persona, csv_path, name) {
     }
 
     message(paste0("'Writing persona to file '", csv_path, "' under name '", name))
-    write_csv(df, csv_path)
+    readr::write_csv(df, csv_path)
 }
 
 
@@ -113,6 +113,8 @@ save_persona <- function(persona, csv_path, name) {
 #' @examples
 #' load_raster("path/to/raster.tif", terra::vect("path/to/shapefile.shp"))
 #' load_raster("path/to.raster.tif", terra::ext(xmin, xmax, ymin, ymax))
+#'
+#' @export
 load_raster <- function(raster_path, crop_area) {
     # Lazy load raster from file
     raster <- terra::rast(raster_path)
