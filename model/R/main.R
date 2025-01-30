@@ -13,26 +13,21 @@ compute_potential <- function(crop_area, persona) {
     # Load global config
     config <- load_config()
 
-    mappings <- generate_mappings(config, persona)
-    slsra_scores <- mappings[[1]]
-    fips_n_scores <- mappings[[2]]
-    fips_n_slope_scores <- mappings[[3]]
-    fips_i_scores <- mappings[[4]]
-    water_scores <- mappings[[3]]
+    mappings <- get_score_mappings(config, persona)
 
     slsra <- slsra_raster_path |>
         load_raster(crop_area) |>
-        reclassify(slsra_scores) |>
+        reclassify_raster(mappings) |>
         sum_layers() |>
         rescale_to_unit_interval()
 
     fips_n <- fips_n_raster_path |>
         load_raster(crop_area) |>
-        reclassify(fips_n_scores)
+        reclassify_raster(mappings)
 
     fips_n_slope <- fips_n_slope_raster_path |>
         load_raster(crop_area) |>
-        reclassify_slopes(fips_n_slope_scores)
+        reclassify_slopes(mappings) # NOTE: does this need mappings?
 
     fips_n <- c(fips_n, fips_n_slope) |>
         sum_layers() |>
@@ -40,7 +35,7 @@ compute_potential <- function(crop_area, persona) {
 
     fips_i <- fips_i_raster_path |>
         load_raster(crop_area) |>
-        reclassify(fips_i_scores)
+        reclassify_raster(mappings)
 
     fips_i_proximity <- fips_i_proximity_raster_path |>
         load_raster(crop_area) |>
@@ -52,7 +47,7 @@ compute_potential <- function(crop_area, persona) {
 
     water <- water_raster_path |>
         load_raster(crop_area) |>
-        reclassify(water_scores)
+        reclassify_raster(mappings)
 
     water_proximity <- water_proximity_raster_path |>
         load_raster(crop_area) |>

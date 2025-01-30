@@ -11,14 +11,16 @@ load_config <- function(config_path = NULL) {
         config_path <- default_config
     }
 
+    column_spec <- readr::cols(
+        Component = readr::col_character(),
+        Dataset = readr::col_character(),
+        Name = readr::col_character(),
+        Description = readr::col_character(),
+        Raster_Val = readr::col_integer()
+    )
+
     # Load config, type casting each column
-    loaded_config <- readr::read_csv(config_path, colClasses = c(
-        "Component" = "character",
-        "Dataset" = "character",
-        "Name" = "character",
-        "Description" = "character",
-        "Raster_Val" = "numeric"
-    ))
+    loaded_config <- readr::read_csv(config_path, col_types = column_spec)
 
     # TODO: check num rows, no additional cols
 

@@ -1,46 +1,81 @@
-#' Generate Score Mappings
+#' Get Score Mappings
+#'
+#' @param config `data.frame` The configuration file
+#' @param persona `integer` The persona
+#'
+#' @returns A mapping {layer_name : {raster_value : persona_score}}
 #'
 #' @export
-generate_mappings <- function(config, persona) {
-    # TODO: produce a list of current_raster_val: score mappings
+get_score_mappings <- function(config, persona) {
+    # Add persona as a new column
+    # TODO: this may need to be more robust and/or moved elsewhere
+    config[["persona"]] <- persona
+
+    # Group the config by dataset, i.e. by layer
+    # Results in a mapping {layer_name : layer_config}
+    config_by_layer <- split(config, as.factor(config[["Dataset"]]))
+
+    # Generate a mapping {layer_name : {raster_value : persona_score}}
+    mappings <- lapply(
+        config_by_layer, function(layer_config) {
+            setNames(layer_config[["persona"]], layer_config[["Raster_Val"]])
+        }
+    )
+    return(mappings)
 }
 
-# NOTE: {{ by }} means `by` should be passed without quotes, as though
-# the function was a standard dplyr one with non-standard evaluation
-# le crie
 
-group_by_mapping <- function(df, by) {
-    values <- df |>
-        dplyr::group_by({{ by }}) |>
-        dplyr::group_split()
 
-    keys <- df |>
-        dplyr::group_by({{ by }}) |>
-        dplyr::group_keys() |>
-        dplyr::pull({{ by }})
+# NOTE: consider renaming reclassify -> remap
 
-    mapping <- setNames(values, keys)
-
-    return(mapping)
-}
-
-#' Reclassify a SpatRaster based on a lookup table
+#' Reclassify a single-layered SpatRaster using a mapping
 #'
 #' @param spat_raster `SpatRaster` The SpatRaster to be reflassified
-#' @param mapping `numeric` A _named_ vector mapping current values (names) to new (values)
+#' @param mapping `numeric` A mapping from current values to new values
 #'
 #' @export
-reclassify <- function(spat_raster, mapping) {
-    curr_values <- terra::values(spat_raster)
+reclassify_layer <- function(layer, mapping) {
+    curr_values <- terra::values(layer)
+
+    # TODO: fix this when data type issue resolved
+
+    # TODO: use typof rather than testing all values equal
+    # Check that we are working with integers, as we should
+    if (!all(curr_values == as.integer(curr_values), na.rm = TRUE)) {
+        stop("Layer contains non-integer values.")
+    }
+    #   if (!is.integer(names(mapping))
 
     new_values <- mapping[curr_values]
 
     # NOTE: original code set NA to 0, but I'm not sure this is necessary/good
-    new_values[is.na(new_values)] <- 0
+    # new_values[is.na(new_values)] <- 0
 
-    terra::values(spat_raster) <- new_values
+    terra::values(layer) <- new_values
 
-    return(spat_raster)
+    return(layer)
+}
+
+# Just loop over layers and reclassify
+reclassify_raster <- function(raster, mappings) {
+    for (layer_name in names(raster)) {
+        # TODO: throw error if doesn't exist
+        mapping <- mappings[[layer_name]]
+
+        raster[[layer_name]] <- reclassify_layer(raster[[layer_name]], mapping)
+    }
+}
+
+#' Reclassify the slope raster
+#' @export
+reclassify_slopes <- function(raster, config) {
+    slope_df <- data.frame(
+        group_val_min = c(0, 1.72, 2.86, 5.71, 11.31, 16.7),
+        group_val_max = c(1.72, 2.86, 5.71, 11.31, 16.7, Inf),
+        score = config[["persona"]]
+    )
+    raster <- terra::classify(raster, rcl = data.matrix(slope_df))
+    return(raster)
 }
 
 #' Rescale a SpatRaster to [0, 1]
@@ -59,18 +94,6 @@ rescale_to_unit_interval <- function(raster) {
 #' @export
 sum_layers <- function(raster) {
     return(terra::app(raster, sum))
-}
-
-#' Reclassify the slope raster
-#' @export
-reclassify_slopes <- function(raster, config) {
-    slope_df <- data.frame(
-        group_val_min = c(0, 1.72, 2.86, 5.71, 11.31, 16.7),
-        group_val_max = c(1.72, 2.86, 5.71, 11.31, 16.7, Inf),
-        score = config[["persona"]]
-    )
-    raster <- terra::classify(raster, rcl = data.matrix(slope_df))
-    return(raster)
 }
 
 

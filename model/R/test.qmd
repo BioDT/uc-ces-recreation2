@@ -1,0 +1,82 @@
+```{r}
+source("io.R")
+source("utils.R")
+```
+
+```{r}
+config <- load_config("../inst/extdata/config.csv")
+
+persona <- sample(1:10, size = 87, replace = TRUE)
+
+config[["persona"]] <- persona
+
+print(config)
+```
+```{r}
+
+groups <- split(config, as.factor(config[["Dataset"]]))
+
+mappings <- lapply(groups, function(df) {
+                   setNames(df[["persona"]], df[["Raster_Val"]])
+            }
+    )
+print(mappings)
+```
+
+```{r}
+m = mappings[["Water_Lakes"]]
+
+typeof(names(m))
+#is.integer(names(m))
+```
+
+
+```
+grouped <- group_by_as_mapping(config, by = Dataset)
+
+print(names(grouped))
+
+lakes <- grouped[["Water_Lakes"]]
+print(lakes)
+```
+
+```{r}
+#raster <- load_raster("../../Data/input/Processed_Data/FIPS_N.tif", terra::vect("../../Data/input/Raw_Shapefile/Bush/Bush.shp"))
+raster <- terra::rast("../../Data/input/Processed_Data/FIPS_N.tif")
+terra::plot(raster)
+```
+
+Smee
+
+```{r}
+unique(terra::values(raster[["FIPS_N_Landform"]]))
+```
+
+```
+for (layer_id in names(raster)) {
+
+    print(typeof(terra::values(raster[[layer_id]])))
+
+    int_layer <- round(raster[[layer_id]])
+    print(typeof(int_layer))
+    terra::values(int_layer) <- as.integer(terra::values(int_layer))
+    print(typeof(int_layer))
+
+    #raster[[layer_id]] <- reclassify_layer(raster[[layer_id]], mappings[[layer_id]])
+
+}
+
+terra::plot(raster)
+```
+
+```
+for (layer_id in names(raster)) {
+    layer <- raster[[layer_id]]
+    conf <- grouped[[layer_id]]
+    mapping <- setNames(conf[["persona"]], conf[["Raster_Val"]])
+
+    reclassified <- reclassify(raster, mapping)
+
+    terra::plot(reclassified)
+}
+```

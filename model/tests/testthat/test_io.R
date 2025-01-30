@@ -1,4 +1,3 @@
-library(readr)
 library(testthat)
 
 # TODO: import package instead of directly sourcing
@@ -8,14 +7,13 @@ source("../../R/io.R")
 test_that("saving and loading a single persona", {
     test_file <- tempfile(fileext = ".csv")
 
-    persona <- c(1, 2, 3, 4, 5) # TODO: a real persona
-    save_persona(persona, test_file, "name")
+    original_persona <- c(1, 2, 3, 4, 5) # TODO: a real persona
+    save_persona(original_persona, test_file, "name")
 
-    df <- read_csv(test_file)
+    loaded_persona <- load_persona(test_file)
 
     expect_true(file.exists(test_file))
-    expect_equal(ncol(df), 1)
-    expect_equal(df$name, persona)
+    expect_equal(loaded_persona, original_persona)
 
     unlink(test_file)
 })
