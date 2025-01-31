@@ -4,7 +4,7 @@
 \alias{logistic_func}
 \title{Compute a logistic function}
 \usage{
-logistic_func(x, alpha = 0.01101, kappa = 5)
+logistic_func(x, alpha, kappa)
 }
 \arguments{
 \item{x}{A raster}

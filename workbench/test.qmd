@@ -13,21 +13,19 @@ config[["persona"]] <- persona
 print(config)
 ```
 ```{r}
-
 groups <- split(config, as.factor(config[["Dataset"]]))
 
 mappings <- lapply(groups, function(df) {
-                   setNames(df[["persona"]], df[["Raster_Val"]])
-            }
-    )
+    setNames(df[["persona"]], df[["Raster_Val"]])
+})
 print(mappings)
 ```
 
 ```{r}
-m = mappings[["Water_Lakes"]]
+m <- mappings[["Water_Lakes"]]
 
 typeof(names(m))
-#is.integer(names(m))
+# is.integer(names(m))
 ```
 
 
@@ -41,7 +39,7 @@ print(lakes)
 ```
 
 ```{r}
-#raster <- load_raster("../../Data/input/Processed_Data/FIPS_N.tif", terra::vect("../../Data/input/Raw_Shapefile/Bush/Bush.shp"))
+# raster <- load_raster("../../Data/input/Processed_Data/FIPS_N.tif", terra::vect("../../Data/input/Raw_Shapefile/Bush/Bush.shp"))
 raster <- terra::rast("../../Data/input/Processed_Data/FIPS_N.tif")
 terra::plot(raster)
 ```

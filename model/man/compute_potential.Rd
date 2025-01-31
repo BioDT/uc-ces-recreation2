@@ -4,7 +4,7 @@
 \alias{compute_potential}
 \title{Compute Recreational Potential}
 \usage{
-compute_potential(crop_area, persona)
+compute_potential(crop_area, persona, data_dir, config_path = NULL)
 }
 \description{
 Compute Recreational Potential

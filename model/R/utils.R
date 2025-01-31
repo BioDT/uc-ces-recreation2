@@ -25,6 +25,25 @@ get_score_mappings <- function(config, persona) {
 }
 
 
+#' Convert raster to int
+#'
+#' @export
+to_int <- function(raster, tol = 1e-5) {
+    # NOTE: see https://github.com/rspatial/terra/issues/763 for why
+    # SpatRasters may be double-typed even when .tif is integer-typed
+
+    values <- terra::values(raster)
+    rounded_values <- round(values)
+
+    # Throw an error if any values are further than 'tol' from the nearest int
+    if (any(abs(values - rounded_values) > tol)) {
+        stop("Raster contains non-integer values")
+    }
+
+    terra::values(raster) <- rounded_values
+
+    return(raster)
+}
 
 # NOTE: consider renaming reclassify -> remap
 
@@ -38,25 +57,24 @@ reclassify_layer <- function(layer, mapping) {
     curr_values <- terra::values(layer)
 
     # TODO: fix this when data type issue resolved
-
-    # TODO: use typof rather than testing all values equal
-    # Check that we are working with integers, as we should
-    if (!all(curr_values == as.integer(curr_values), na.rm = TRUE)) {
+    # See https://github.com/rspatial/terra/issues/1036
+    if (!is.integer(curr_values)) {
         stop("Layer contains non-integer values.")
     }
-    #   if (!is.integer(names(mapping))
+    if (!is.integer(names(mapping))) {
+        stop("Mapping keys contain non-integer values")
+    }
 
     new_values <- mapping[curr_values]
-
-    # NOTE: original code set NA to 0, but I'm not sure this is necessary/good
-    # new_values[is.na(new_values)] <- 0
 
     terra::values(layer) <- new_values
 
     return(layer)
 }
 
-# Just loop over layers and reclassify
+#' Just loop over layers and reclassify
+#'
+#' @export
 reclassify_raster <- function(raster, mappings) {
     for (layer_name in names(raster)) {
         # TODO: throw error if doesn't exist
@@ -64,6 +82,7 @@ reclassify_raster <- function(raster, mappings) {
 
         raster[[layer_name]] <- reclassify_layer(raster[[layer_name]], mapping)
     }
+    return(raster)
 }
 
 #' Reclassify the slope raster
@@ -78,6 +97,23 @@ reclassify_slopes <- function(raster, config) {
     return(raster)
 }
 
+
+#' NA to zero
+#'
+#' Map NA (not available / missing) to zero, keeping NaN as is
+#'
+#' @export
+na_to_zero <- function(raster) {
+    return(terra::ifel(is.na(raster) & !is.nan(raster), 0, raster))
+}
+
+#' Sum the layers of a SpatRaster
+#'
+#' @export
+sum_layers <- function(raster) {
+    return(terra::app(raster, sum))
+}
+
 #' Rescale a SpatRaster to [0, 1]
 #'
 #' @export
@@ -90,12 +126,6 @@ rescale_to_unit_interval <- function(raster) {
     return(result)
 }
 
-#' Sum the layers of a SpatRaster
-#' @export
-sum_layers <- function(raster) {
-    return(terra::app(raster, sum))
-}
-
 
 #' Compute a logistic function
 #'
@@ -104,7 +134,7 @@ sum_layers <- function(raster) {
 #' @param kappa A less important parameter
 #'
 #' @export
-logistic_func <- function(x, alpha = 0.01101, kappa = 5) {
+logistic_func <- function(x, alpha, kappa) {
     # TODO: add link to paper, equation etc.
     return((kappa + 1) / (kappa + exp(alpha * x)))
 }

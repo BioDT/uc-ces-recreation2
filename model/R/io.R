@@ -1,6 +1,32 @@
 # default_config <- system.file("extdata", "config.csv", package = "model")
 default_config <- "../inst/extdata/config.csv"
 
+assert_valid_data_dir <- function(data_dir) {
+    if (!dir.exists(data_dir)) {
+        stop(paste0("Error: the directory ", data_dir, " does not exist"))
+    }
+
+    if (!file.access(data_dir, 4) == 0) {
+        stop(paste0("Error: the directory ", data_dir, " is not readable"))
+    }
+
+    required_files <- c(
+        "SLSRA.tif",
+        "FIPS_N.tif",
+        "FIPS_N_Slope.tif",
+        "FIPS_I.tif",
+        "FIPS_I_Proximity.tif",
+        "Water.tif",
+        "Water_Proximity.tif"
+    )
+    missing_files <- required_files[!required_files %in% list.files(data_dir)]
+
+    if (length(missing_files) > 0) {
+        stop(paste0("Error: the directory ", data_dir, " is missing the following required files: ", paste(missing_files, collapse = ", "))) # nolint
+    }
+}
+
+
 #' Load configuration from file
 #'
 #' @param config_path `character` Optional path to non-default configuration file
