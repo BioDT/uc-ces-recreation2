@@ -25,12 +25,12 @@ FIPS_N,FIPS_N_Landform,FIPS_N_Landform_13,Valley bottom,14
 FIPS_N,FIPS_N_Landform,FIPS_N_Landform_14,Built-up areas,15
 FIPS_N,FIPS_N_Landform,FIPS_N_Landform_15,Saltings,16
 FIPS_N,FIPS_N_Landform,FIPS_N_Landform_16,Hummocks / mounds / moraines,17
-FIPS_N,FIPS_N_Slope,FIPS_N_Slope_1,easy,1.72
-FIPS_N,FIPS_N_Slope,FIPS_N_Slope_2,gentle slope,2.86
-FIPS_N,FIPS_N_Slope,FIPS_N_Slope_3,medium slope,5.71
-FIPS_N,FIPS_N_Slope,FIPS_N_Slope_4,steep slope,11.31
-FIPS_N,FIPS_N_Slope,FIPS_N_Slope_5,very steep slope,16.7
-FIPS_N,FIPS_N_Slope,FIPS_N_Slope_6,extremely steep slope,62.48313141
+FIPS_N,FIPS_N_Slope,FIPS_N_Slope_1,easy,1
+FIPS_N,FIPS_N_Slope,FIPS_N_Slope_2,gentle slope,2
+FIPS_N,FIPS_N_Slope,FIPS_N_Slope_3,medium slope,3
+FIPS_N,FIPS_N_Slope,FIPS_N_Slope_4,steep slope,4
+FIPS_N,FIPS_N_Slope,FIPS_N_Slope_5,very steep slope,5
+FIPS_N,FIPS_N_Slope,FIPS_N_Slope_6,extremely steep slope,6
 FIPS_N,FIPS_N_Soil,FIPS_N_Soil_1,Peat / Organic,1
 FIPS_N,FIPS_N_Soil,FIPS_N_Soil_2,Mineral,2
 Water,Water_Lakes,Water_Lakes_1,Pond,5
