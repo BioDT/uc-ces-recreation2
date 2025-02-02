@@ -1,0 +1,117 @@
+.assert_valid_raster_dir <- function(raster_dir) {
+    if (!dir.exists(raster_dir)) {
+        stop(paste0("Error: the directory ", raster_dir, " does not exist"))
+    }
+
+    if (!file.access(raster_dir, 4) == 0) {
+        stop(paste0("Error: the directory ", raster_dir, " is not readable"))
+    }
+
+    required_files <- c(
+        "SLSRA.tif",
+        "FIPS_N.tif",
+        "FIPS_I.tif",
+        "Water.tif"
+    )
+    missing_files <- required_files[!required_files %in% list.files(raster_dir)]
+
+    if (length(missing_files) > 0) {
+        stop(paste0("Error: the directory ", raster_dir, " is missing the following required files: ", paste(missing_files, collapse = ", "))) # nolint
+    }
+
+    # TODO: check names of rasters
+}
+
+
+#' Load a cropped raster
+#'
+#' @description
+#' Load a cropped raster from a file
+#'
+#' @details
+#' Details...
+#'
+#' @param raster_path `character` Path to a raster file to load
+#' @param crop_area A SpatExtent or another object with a SpatExtent
+#'
+#' @examples
+#' load_raster("path/to/raster.tif", terra::vect("path/to/shapefile.shp"))
+#' load_raster("path/to.raster.tif", terra::ext(xmin, xmax, ymin, ymax))
+#'
+#' @export
+load_raster <- function(raster_path, crop_area) {
+    # Lazy load raster from file
+    raster <- terra::rast(raster_path)
+
+    # Crop using either a shapefile or SpatExtent
+    raster <- terra::crop(raster, crop_area)
+
+    # If crop_area is a vector we also need to mask, since
+    # terra::crop only restricts to the bounding box of the vector
+    if (inherits(crop_area, "SpatVector")) {
+        raster <- terra::mask(raster, crop_area)
+    }
+
+    return(raster)
+}
+
+#' Convert raster to int
+#'
+#' @export
+to_int <- function(raster, tol = 1e-5) {
+    # NOTE: see https://github.com/rspatial/terra/issues/763 for why
+    # SpatRasters may be double-typed even when .tif is integer-typed
+
+    values <- terra::values(raster)
+    rounded_values <- round(values)
+
+    # Throw an error if any values are further than 'tol' from the nearest int
+    if (any(abs(values - rounded_values) > tol)) {
+        stop("Raster contains non-integer values")
+    }
+
+    terra::values(raster) <- rounded_values
+
+    return(raster)
+}
+
+#' NA to zero
+#'
+#' Map NA (not available / missing) to zero, keeping NaN as is
+#'
+#' @export
+na_to_zero <- function(raster) {
+    return(terra::ifel(is.na(raster) & !is.nan(raster), 0, raster))
+}
+
+#' Sum the layers of a SpatRaster
+#'
+#' @export
+sum_layers <- function(raster) {
+    return(terra::app(raster, sum))
+}
+
+#' Rescale a SpatRaster to [0, 1]
+#'
+#' @export
+rescale_to_unit_interval <- function(raster) {
+    min_value <- min(terra::values(raster), na.rm = TRUE)
+    max_value <- max(terra::values(raster), na.rm = TRUE)
+
+    result <- (raster - min_value) / (max_value - min_value)
+
+    return(result)
+}
+
+
+#' Compute a logistic function
+#'
+#' @param x A raster
+#' @param alpha Coefficient in the exponent
+#' @param kappa A less important parameter
+#'
+#' @export
+logistic_func <- function(x, alpha, kappa) {
+    # TODO: add link to paper, equation etc.
+    return((kappa + 1) / (kappa + exp(alpha * x)))
+}

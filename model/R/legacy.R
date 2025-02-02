@@ -24,29 +24,6 @@ get_score_mappings <- function(config, persona) {
     return(mappings)
 }
 
-
-#' Convert raster to int
-#'
-#' @export
-to_int <- function(raster, tol = 1e-5) {
-    # NOTE: see https://github.com/rspatial/terra/issues/763 for why
-    # SpatRasters may be double-typed even when .tif is integer-typed
-
-    values <- terra::values(raster)
-    rounded_values <- round(values)
-
-    # Throw an error if any values are further than 'tol' from the nearest int
-    if (any(abs(values - rounded_values) > tol)) {
-        stop("Raster contains non-integer values")
-    }
-
-    terra::values(raster) <- rounded_values
-
-    return(raster)
-}
-
-# NOTE: consider renaming reclassify -> remap
-
 #' Reclassify a single-layered SpatRaster using a mapping
 #'
 #' @param spat_raster `SpatRaster` The SpatRaster to be reflassified
@@ -95,46 +72,4 @@ reclassify_slopes <- function(raster, config) {
     )
     raster <- terra::classify(raster, rcl = data.matrix(slope_df))
     return(raster)
-}
-
-
-#' NA to zero
-#'
-#' Map NA (not available / missing) to zero, keeping NaN as is
-#'
-#' @export
-na_to_zero <- function(raster) {
-    return(terra::ifel(is.na(raster) & !is.nan(raster), 0, raster))
-}
-
-#' Sum the layers of a SpatRaster
-#'
-#' @export
-sum_layers <- function(raster) {
-    return(terra::app(raster, sum))
-}
-
-#' Rescale a SpatRaster to [0, 1]
-#'
-#' @export
-rescale_to_unit_interval <- function(raster) {
-    min_value <- min(terra::values(raster), na.rm = TRUE)
-    max_value <- max(terra::values(raster), na.rm = TRUE)
-
-    result <- (raster - min_value) / (max_value - min_value)
-
-    return(result)
-}
-
-
-#' Compute a logistic function
-#'
-#' @param x A raster
-#' @param alpha Coefficient in the exponent
-#' @param kappa A less important parameter
-#'
-#' @export
-logistic_func <- function(x, alpha, kappa) {
-    # TODO: add link to paper, equation etc.
-    return((kappa + 1) / (kappa + exp(alpha * x)))
 }

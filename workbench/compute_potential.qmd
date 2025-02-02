@@ -1,3 +1,10 @@
+---
+title: Compute components of the Recreational Potential
+format:
+  html:
+    embed-resources: true
+---
+
 ```{r}
 library(terra)
 ```
@@ -10,18 +17,30 @@ config_path <- "config.csv"
 # Load global config
 config <- model::load_config(config_path)
 
-mappings <- data.frame(
+mappings_df <- data.frame(
     persona = sample(0:10, size=87, replace = TRUE)
 )
-rownames(mappings) <- config[["Name"]]
-mappings
+rownames(mappings_df) <- config[["Name"]]
+mappings_df
+
+ncol(mappings_df)
+```
+
+```{r}
+mappings_vec <- setNames(mappings_df[["persona"]], config[["Name"]])
+mappings_vec
 ```
 
 ```{r}
 raster <- rast(file.path(data_dir, "FIPS_I.tif"))
 
 # This is how you index a data frame using the row names
-scores <- mappings[names(raster),]
+scores_df <- mappings_df[names(raster),]
+
+# This is how you index a named vector
+scores_vec <- mappings_vec[names(raster)]
+
+scores <- scores_vec
 
 # Remember app applies `fun` to each 1d stack of layers
 result <- app(raster, function(features) {
