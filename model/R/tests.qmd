@@ -10,6 +10,8 @@ data_dir <- "../../workbench/data/one_hot"
 config_path <- "../../workbench/config.csv"
 
 source("config.R")
+source("potential.R")
+source("raster.R")
 
 # Load global config
 config <- load_config()
@@ -77,7 +79,7 @@ identical(persona, loaded_persona)
 ```
 
 
-```{r}
+```r
 persona2 <- setNames(
     sample(0:10, size = 87, replace = TRUE),
     config[["Name"]]
@@ -91,4 +93,15 @@ loaded_persona <- load_persona("test_persona.csv", "random2")
 loaded_persona
 
 # file.remove("test_persona.csv")
+```
+
+## Test RP
+
+```{r}
+persona <- load_persona("test_persona.csv")
+data_dir <- "../../workbench/data/one_hot/"
+
+layers <- compute_potential(persona, data_dir)
+
+terra::plot(layers)
 ```

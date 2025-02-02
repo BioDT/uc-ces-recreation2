@@ -9,6 +9,15 @@ format:
 ```{r}
 library(terra)
 ```
+```{r}
+# NOTE: map NaN to zero because the input data erroneously
+# contains NaN. When I'm responsible for data generation DO NOT
+# do this!
+na_to_zero <- function(raster) {
+  return(ifel(is.na(raster), 0, raster))
+}
+```
+
 
 ## Take original (contaminated) data and crop to Bush estate
 
@@ -17,28 +26,20 @@ crop_area <- vect("../Data/input/Raw_Shapefile/Bush/Bush.shp")
 data_dir <- "../Data/input/Processed_Data/"
 output_dir <- "data/original"
 
-# NOTE: map NaN to zero because the input data erroneously
-# contains NaN. When I'm responsible for data generation DO NOT
-# do this!
-na_to_zero <- function(raster) {
-  return(ifel(is.na(raster), 0, raster))
-}
-
 slsra <- file.path(data_dir, "SLSRA.tif") |>
   rast() |>
   crop(crop_area) |>
   round() |>
-  na_to_zero()
 
-writeRaster(slsra, filename = file.path(output_dir, "SLSRA.tif"), overwrite = TRUE)
 
 plot(slsra)
+
+writeRaster(slsra, filename = file.path(output_dir, "SLSRA.tif"), overwrite = TRUE)
 
 fips_n <- file.path(data_dir, "FIPS_N.tif") |>
   rast() |>
   crop(crop_area) |>
   round() |>
-  na_to_zero()
 
 writeRaster(fips_n, filename = file.path(output_dir, "FIPS_N.tif"), overwrite = TRUE)
 
@@ -56,7 +57,6 @@ fips_i <- file.path(data_dir, "FIPS_I.tif") |>
   rast() |>
   crop(crop_area) |>
   round() |>
-  na_to_zero()
 
 writeRaster(fips_i, filename = file.path(output_dir, "FIPS_I.tif"), overwrite = TRUE)
 
@@ -66,7 +66,6 @@ water <- file.path(data_dir, "Water.tif") |>
   rast() |>
   crop(crop_area) |>
   round() |>
-  na_to_zero()
 
 writeRaster(water, filename = file.path(output_dir, "Water.tif"), overwrite = TRUE)
 
@@ -114,18 +113,21 @@ one_hot_layer <- function(layer, feature_mappings) {
 one_hot <- function(raster, feature_mappings) {
     return(sapp(raster, function(layer) one_hot_layer(layer, feature_mappings)))
 }
+
 ```
 
 ```{r}
 slsra <- file.path(data_dir, "SLSRA.tif") |>
   rast() |>
-  one_hot(feature_mappings)
+  one_hot(feature_mappings) |>
+  na_to_zero()
 
 #print(names(slsra))
 
 fips_n <- file.path(data_dir, "FIPS_N.tif") |>
   rast() |>
-  one_hot(feature_mappings)
+  one_hot(feature_mappings) |>
+  na_to_zero()
 
 
 # First need to quantise the slope values before one-hot encoding
@@ -139,7 +141,8 @@ slope_rcl <- data.matrix(data.frame(
 fips_n_slope <- file.path(data_dir, "FIPS_N_Slope.tif") |>
   rast() |>
   classify(rcl = slope_rcl) |>
-  one_hot(feature_mappings)
+  one_hot(feature_mappings) |>
+  na_to_zero()
 
 #plot(fips_n_slope)
 
@@ -149,13 +152,15 @@ fips_i <- file.path(data_dir, "FIPS_I.tif") |>
   rast() |>
   one_hot(feature_mappings) |>
   distance() |>
-  model::logistic_func(alpha=0.01, kappa=5)
+  model::logistic_func(alpha=0.01, kappa=5) |>
+  na_to_zero()
 
 water <- file.path(data_dir, "Water.tif") |>
   rast() |>
   one_hot(feature_mappings) |>
   distance() |>
-  model::logistic_func(alpha=0.01, kappa=5)
+  model::logistic_func(alpha=0.01, kappa=5) |>
+  na_to_zero() 
 
 
 # NOTE: Should compress using LZW compression
@@ -166,6 +171,11 @@ writeRaster(fips_i, filename = file.path(output_dir, "FIPS_I.tif"), overwrite = 
 writeRaster(water, filename = file.path(output_dir, "Water.tif"), overwrite = TRUE)
 
 
-plot(water)
+#plot(water)
+
+x <- rast(file.path(output_dir, "SLSRA.tif"))
+x
+
+plot(x)
 
 ```

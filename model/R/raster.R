@@ -1,4 +1,5 @@
-.assert_valid_raster_dir <- function(raster_dir) {
+#' @export
+assert_valid_raster_dir <- function(raster_dir) {
     if (!dir.exists(raster_dir)) {
         stop(paste0("Error: the directory ", raster_dir, " does not exist"))
     }
@@ -39,12 +40,16 @@
 #' load_raster("path/to.raster.tif", terra::ext(xmin, xmax, ymin, ymax))
 #'
 #' @export
-load_raster <- function(raster_path, crop_area) {
+load_raster <- function(raster_path, area = NULL) {
     # Lazy load raster from file
     raster <- terra::rast(raster_path)
 
+    if (is.null(area)) {
+        return(raster)
+    }
+
     # Crop using either a shapefile or SpatExtent
-    raster <- terra::crop(raster, crop_area)
+    raster <- terra::crop(raster, area)
 
     # If crop_area is a vector we also need to mask, since
     # terra::crop only restricts to the bounding box of the vector
