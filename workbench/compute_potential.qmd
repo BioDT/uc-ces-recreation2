@@ -1,0 +1,32 @@
+```{r}
+library(terra)
+```
+
+
+```{r}
+data_dir <- "data/one_hot"
+config_path <- "config.csv"
+
+# Load global config
+config <- model::load_config(config_path)
+
+mappings <- data.frame(
+    persona = sample(0:10, size=87, replace = TRUE)
+)
+rownames(mappings) <- config[["Name"]]
+mappings
+```
+
+```{r}
+raster <- rast(file.path(data_dir, "FIPS_I.tif"))
+
+# This is how you index a data frame using the row names
+scores <- mappings[names(raster),]
+
+# Remember app applies `fun` to each 1d stack of layers
+result <- app(raster, function(features) {
+    sum(scores * features, na.rm = TRUE)
+})
+
+plot(result)
+```
