@@ -12,7 +12,7 @@ load_persona(csv_path, name = NULL)
 \item{name}{\code{character} Name of the persona, which should match a column name}
 }
 \value{
-\code{integer} A dataframe of integers representing the persona
+\code{integer} A named vector of integers representing the persona
 }
 \description{
 Loads a single persona from a csv file containing one or more personas.

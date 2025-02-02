@@ -1,3 +1,6 @@
+#' Compute a single component
+#'
+#' @export
 compute_component <- function(raster, persona) {
     scores <- persona[names(raster)]
     result <- terra::app(raster, function(features) {
@@ -11,7 +14,7 @@ compute_component <- function(raster, persona) {
 #' @export
 compute_potential <- function(persona, raster_dir, bbox = NULL) {
     # Up-front check that raster_dir exists, is readable, contains required files
-    assert_valid_raster_dir(raster_dir)
+    .assert_valid_raster_dir(raster_dir)
 
     slsra <- file.path(raster_dir, "SLSRA.tif") |>
         load_raster(bbox) |>

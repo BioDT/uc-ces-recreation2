@@ -1,5 +1,4 @@
-#' @export
-assert_valid_raster_dir <- function(raster_dir) {
+.assert_valid_raster_dir <- function(raster_dir) {
     if (!dir.exists(raster_dir)) {
         stop(paste0("Error: the directory ", raster_dir, " does not exist"))
     }
@@ -53,8 +52,8 @@ load_raster <- function(raster_path, area = NULL) {
 
     # If crop_area is a vector we also need to mask, since
     # terra::crop only restricts to the bounding box of the vector
-    if (inherits(crop_area, "SpatVector")) {
-        raster <- terra::mask(raster, crop_area)
+    if (inherits(area, "SpatVector")) {
+        raster <- terra::mask(raster, area)
     }
 
     return(raster)
@@ -98,6 +97,8 @@ sum_layers <- function(raster) {
 
 #' Rescale a SpatRaster to [0, 1]
 #'
+#' Uses an affine transformation
+#'
 #' @export
 rescale_to_unit_interval <- function(raster) {
     min_value <- min(terra::values(raster), na.rm = TRUE)
@@ -109,14 +110,19 @@ rescale_to_unit_interval <- function(raster) {
 }
 
 
-#' Compute a logistic function
+#' Map distances to the unit interval
+#'
+#' Uses a logistic function to map positive distances \eqn{d}
+#' to the unit interval \eqn{x \in [0, 1]}.
+#'
+#' \deqn{ x = \frac{\kappa + 1}{\kappa + \exp(\alpha d)} }
 #'
 #' @param x A raster
 #' @param alpha Coefficient in the exponent
 #' @param kappa A less important parameter
 #'
 #' @export
-logistic_func <- function(x, alpha, kappa) {
+map_distance_to_unit_interval <- function(x, alpha, kappa) {
     # TODO: add link to paper, equation etc.
     return((kappa + 1) / (kappa + exp(alpha * x)))
 }

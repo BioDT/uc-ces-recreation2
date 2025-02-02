@@ -1,9 +1,12 @@
-# TODO: fix this
-# default_config <- system.file("extdata", "config.csv", package = "model")
-config_path <- "_config.csv"
+# TODO: fix this shit
+default_config <- here::here("config.csv")
+# system.file("extdata", "config.csv", package = "model")
 
 #' @export
-load_config <- function() {
+load_config <- function(config_path = NULL) {
+    if (is.null(config_path)) {
+        config_path <- default_config
+    }
     column_spec <- readr::cols(
         Component = readr::col_character(),
         Dataset = readr::col_character(),
@@ -45,7 +48,6 @@ load_config <- function() {
 
 .assert_valid_persona <- function(persona) {
     expected_names <- load_config()[["Name"]]
-    # TODO: decide on named vector vs data.frame, names vs rownames
     if (!identical(sort(names(persona)), sort(expected_names))) {
         stop("Error: malformed names in the persona vector")
     }
@@ -63,7 +65,7 @@ load_config <- function() {
 #' @param csv_path `character` Path to a csv file containing one or more personas
 #' @param name `character` Name of the persona, which should match a column name
 #'
-#' @return `integer` A dataframe of integers representing the persona
+#' @return `integer` A named vector of integers representing the persona
 #'
 #' @export
 load_persona <- function(csv_path, name = NULL) {

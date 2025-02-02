@@ -7,5 +7,5 @@
 rescale_to_unit_interval(raster)
 }
 \description{
-Rescale a SpatRaster to \link{0, 1}
+Uses an affine transformation
 }

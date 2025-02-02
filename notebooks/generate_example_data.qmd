@@ -1,4 +1,3 @@
-
 ---
 title: Generate test input data
 format:
@@ -8,6 +7,7 @@ format:
 
 ```{r}
 library(terra)
+devtools::load_all("../model")
 ```
 ```{r}
 # NOTE: map NaN to zero because the input data erroneously
@@ -39,7 +39,7 @@ writeRaster(slsra, filename = file.path(output_dir, "SLSRA.tif"), overwrite = TR
 fips_n <- file.path(data_dir, "FIPS_N.tif") |>
   rast() |>
   crop(crop_area) |>
-  round() |>
+  round()
 
 writeRaster(fips_n, filename = file.path(output_dir, "FIPS_N.tif"), overwrite = TRUE)
 
@@ -56,7 +56,7 @@ plot(fips_n_slope)
 fips_i <- file.path(data_dir, "FIPS_I.tif") |>
   rast() |>
   crop(crop_area) |>
-  round() |>
+  round()
 
 writeRaster(fips_i, filename = file.path(output_dir, "FIPS_I.tif"), overwrite = TRUE)
 
@@ -65,7 +65,7 @@ plot(fips_i)
 water <- file.path(data_dir, "Water.tif") |>
   rast() |>
   crop(crop_area) |>
-  round() |>
+  round()
 
 writeRaster(water, filename = file.path(output_dir, "Water.tif"), overwrite = TRUE)
 
@@ -80,7 +80,7 @@ rm(c(slsra, fips_n, fips_n_slope, fips_i, water))
 data_dir <- "data/original/"
 output_dir <- "data/one_hot/"
 
-config <- model::load_config("../model/inst/extdata/config.csv")
+config <- model::load_config("../model/config.csv")
 
 get_feature_mappings <- function(config) {
   # Group by layer, results in {layer_name : layer_config}
@@ -152,14 +152,14 @@ fips_i <- file.path(data_dir, "FIPS_I.tif") |>
   rast() |>
   one_hot(feature_mappings) |>
   distance() |>
-  model::logistic_func(alpha=0.01, kappa=5) |>
+  model::map_distance_to_unit_interval(alpha=0.01, kappa=5) |>
   na_to_zero()
 
 water <- file.path(data_dir, "Water.tif") |>
   rast() |>
   one_hot(feature_mappings) |>
   distance() |>
-  model::logistic_func(alpha=0.01, kappa=5) |>
+  model::map_distance_to_unit_interval(alpha=0.01, kappa=5) |>
   na_to_zero() 
 
 

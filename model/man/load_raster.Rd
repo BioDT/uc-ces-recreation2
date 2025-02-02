@@ -4,7 +4,7 @@
 \alias{load_raster}
 \title{Load a cropped raster}
 \usage{
-load_raster(raster_path, crop_area)
+load_raster(raster_path, area = NULL)
 }
 \arguments{
 \item{raster_path}{\code{character} Path to a raster file to load}
