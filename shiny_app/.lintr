@@ -1,0 +1,8 @@
+linters: linters_with_defaults(
+  line_length_linter(120L),
+  indentation_linter(indent = 4L)
+  )
+exclusions: list(
+  "."
+  )
+
