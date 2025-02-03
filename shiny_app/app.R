@@ -1,20 +1,33 @@
 library(shiny)
 library(leaflet)
 
+# setwd(here::here())
+print(getwd())
 devtools::load_all("../model")
 
-persona <- model::load_persona("persona.csv")
+.persona_dir <- "personas"
 
+.persona <- model::load_persona(file.path(.persona_dir, "template.csv"))
+
+
+list_persona_files <- function() {
+    return(list.files(path = .persona_dir, pattern = "\\.csv$", full.names = FALSE))
+}
+
+list_personas_in_file <- function(csv_file) {
+    personas <- names(read.csv(csv_file, nrows = 1))
+    return(personas[personas != "index"])
+}
 
 create_sliders <- function(component) {
-    layer_names <- names(persona)[startsWith(names(persona), component)]
+    layer_names <- names(.persona)[startsWith(names(.persona), component)]
     sliders <- lapply(layer_names, function(layer_name) {
         sliderInput(
             layer_name,
             label = layer_name, # TODO: fix
             min = 0,
             max = 10,
-            value = persona[[layer_name]],
+            value = .persona[[layer_name]],
             round = TRUE,
             ticks = FALSE
         )
@@ -39,12 +52,35 @@ palette <- colorNumeric(
 
 ui <- fluidPage(
     tags$head(
-        tags$style(HTML("html, body {height: 100%;} #map {height: 80vh !important;}"))
+        tags$style(HTML("
+            html, body {height: 100%;}
+            #map {height: 80vh !important;}
+            .load-row {display: flex; align-items: flex-end;}
+        "))
     ),
     titlePanel("BioDT - Scotland Recreational Model"),
     fluidRow(
         column(
             width = 6,
+            fluidRow(
+                column(
+                    width = 6,
+                    selectInput("fileSelect", "Select File", NULL)
+                ),
+                column(
+                    width = 4,
+                    selectInput("personaSelect", "Select Persona", NULL)
+                ),
+                column(
+                    width = 1,
+                    actionButton("loadButton", "Load")
+                ),
+                column(
+                    width = 1,
+                    actionButton("saveButton", "Save")
+                )
+            ),
+            verbatimTextOutput("saveInfo"),
             tabsetPanel(
                 tabPanel("SLSRA", create_sliders("SLSRA")),
                 tabPanel("FIPS_N", create_sliders("FIPS_N")),
@@ -97,16 +133,37 @@ server <- function(input, output, session) {
             addRasterImage(curr_layer, colors = palette, opacity = 0.8)
     }
 
+    # Update file selection (any time user clicks 'save')
+    update_file_choices <- function() {
+        files <- list_persona_files()
+        updateSelectInput(session, "fileSelect", choices = setNames(files, basename(files)))
+    }
 
-    # Recompute raster when update button is clicked
-    observeEvent(input$updateButton, {
-        persona_ <- sapply(
-            names(persona),
+    update_persona_choices <- function() {
+        req(input$fileSelect)
+        personas <- list_personas_in_file(file.path(.persona_dir, input$fileSelect))
+        updateSelectInput(session, "personaSelect", choices = personas)
+    }
+
+    # Load initial file choices
+    update_file_choices()
+
+    get_persona_from_sliders <- function() {
+        persona <- sapply(
+            names(.persona),
             function(layer_name) input[[layer_name]],
             USE.NAMES = TRUE
         )
-        layers <- model::compute_potential(persona_, raster_dir = "data/one_hot/") |>
-            model::rescale_to_unit_interval() # TODO: do this in compute_potential
+        return(persona)
+    }
+
+    # Recompute raster when update button is clicked
+    observeEvent(input$updateButton, {
+        persona <- get_persona_from_sliders()
+        layers <- model::compute_potential(persona, raster_dir = "data/one_hot/")
+
+        # TODO: do this in compute_potential
+        layers <- terra::sapp(layers, model::rescale_to_unit_interval)
 
         # Update reactiveLayers with new raster
         reactiveLayers(layers)
@@ -117,6 +174,58 @@ server <- function(input, output, session) {
     # Update map using cached values when layer selection changes
     observeEvent(input$layerSelect, {
         update_map()
+    })
+
+    observeEvent(input$fileSelect, {
+        update_persona_choices()
+    })
+
+    # Load a new persona
+    observeEvent(input$loadButton, {
+        req(input$fileSelect)
+        req(input$personaSelect)
+
+        loaded_persona <- model::load_persona(
+            file.path(.persona_dir, input$fileSelect),
+            input$personaSelect
+        )
+
+        # Apply new persona to sliders
+        lapply(names(loaded_persona), function(layer_name) {
+            updateSliderInput(session, inputId = layer_name, value = loaded_persona[[layer_name]])
+        })
+    })
+
+    observeEvent(input$saveButton, {
+        req(input$fileSelect)
+        req(input$personaSelect)
+
+        showModal(
+            modalDialog(
+                title = "Save Persona",
+                textInput("saveFileName", "Enter file name", value = input$fileSelect),
+                textInput("savePersonaName", "Enter persona name", value = input$personaSelect),
+                footer = tagList(
+                    modalButton("Cancel"),
+                    actionButton("confirmSave", "Save")
+                )
+            )
+        )
+    })
+
+    observeEvent(input$confirmSave, {
+        model::save_persona(
+            persona = get_persona_from_sliders(),
+            csv_path = file.path(.persona_dir, input$saveFileName),
+            name = input$savePersonaName
+        )
+        update_file_choices()
+
+        output$saveInfo <- renderPrint({
+            paste("Saving persona '", input$savePersonaName, "' to file '", input$saveFileName)
+        })
+
+        removeModal()
     })
 }
 

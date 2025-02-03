@@ -104,6 +104,10 @@ load_persona <- function(csv_path, name = NULL) {
 #'
 #' @export
 save_persona <- function(persona, csv_path, name) {
+    if (name == "index") {
+        message("Cannot name the persona 'index'. Persona not saved")
+        return()
+    }
     .assert_valid_persona(persona)
 
     # Create a dataframe with 'index' and 'name'
