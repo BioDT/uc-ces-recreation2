@@ -6,9 +6,10 @@ print(getwd())
 devtools::load_all("../model")
 
 .persona_dir <- "personas"
-
-.persona <- model::load_persona(file.path(.persona_dir, "template.csv"))
-
+.example_persona_csv <- file.path(.persona_dir, "examples.csv")
+.config <- load_config()
+.layer_info <- setNames(.config[["Description"]], .config[["Name"]])
+.layer_names <- names(.layer_info)
 
 list_persona_files <- function() {
     return(list.files(path = .persona_dir, pattern = "\\.csv$", full.names = FALSE))
@@ -20,14 +21,14 @@ list_personas_in_file <- function(csv_file) {
 }
 
 create_sliders <- function(component) {
-    layer_names <- names(.persona)[startsWith(names(.persona), component)]
-    sliders <- lapply(layer_names, function(layer_name) {
+    layer_names_this_component <- .layer_names[startsWith(.layer_names, component)]
+    sliders <- lapply(layer_names_this_component, function(layer_name) {
         sliderInput(
             layer_name,
-            label = layer_name, # TODO: fix
+            label = .layer_info[[layer_name]],
             min = 0,
             max = 10,
-            value = .persona[[layer_name]],
+            value = 0,
             round = TRUE,
             ticks = FALSE
         )
@@ -150,7 +151,7 @@ server <- function(input, output, session) {
 
     get_persona_from_sliders <- function() {
         persona <- sapply(
-            names(.persona),
+            .layer_names,
             function(layer_name) input[[layer_name]],
             USE.NAMES = TRUE
         )
