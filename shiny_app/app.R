@@ -5,6 +5,23 @@ library(leaflet)
 print(getwd())
 devtools::load_all("../model")
 
+# UKCEH theming
+devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
+
+# Modify theme so buttons are visible...
+UKCEH_theme <- bs_add_rules(
+    UKCEH_theme,
+    ".btn {
+    color: black;
+    border-color: darkgrey;
+    }"
+)
+
+.credentials <- data.frame(
+    user = Sys.getenv("APP_USERNAME"),
+    password = Sys.getenv("APP_PASSWORD")
+)
+
 .persona_dir <- "personas"
 .example_persona_csv <- file.path(.persona_dir, "examples.csv")
 .config <- load_config()
@@ -52,40 +69,45 @@ palette <- colorNumeric(
 )
 
 ui <- fluidPage(
+    theme = UKCEH_theme,
     tags$head(
         tags$style(HTML("
             html, body {height: 100%;}
             #map {height: 80vh !important;}
         "))
     ),
-    titlePanel("BioDT - Scotland Recreational Model"),
+    # Add title, contact address and privacy notice in combined title panel + header
+    fluidRow(
+        style = "background-color: #f8f9fa;",
+        UKCEH_titlePanel("BioDT: Recreational Potential Model"),
+    ),
     fluidRow(
         column(
             width = 6,
+            fluidRow(
+                column(
+                    width = 3,
+                    actionButton("loadButton", "Load Persona")
+                ),
+                column(
+                    width = 3,
+                    actionButton("saveButton", "Save Persona")
+                ),
+                column(
+                    width = 6,
+                    actionButton("updateButton", "Update Map")
+                )
+            ),
+            verbatimTextOutput("userInfo"),
             tabsetPanel(
                 tabPanel("SLSRA", create_sliders("SLSRA")),
                 tabPanel("FIPS_N", create_sliders("FIPS_N")),
                 tabPanel("FIPS_I", create_sliders("FIPS_I")),
                 tabPanel("Water", create_sliders("Water"))
-            )
+            ),
         ),
         column(
             width = 6,
-            fluidRow(
-                column(
-                    width = 1,
-                    actionButton("loadButton", "Load")
-                ),
-                column(
-                    width = 1,
-                    actionButton("saveButton", "Save")
-                ),
-                column(
-                    width = 4,
-                    actionButton("updateButton", "Update Map")
-                )
-            ),
-            verbatimTextOutput("userInfo"),
             radioButtons(
                 "layerSelect",
                 "Select Layer",
@@ -100,11 +122,32 @@ ui <- fluidPage(
                 inline = TRUE
             ),
             leafletOutput("map")
+        ),
+        tags$div(
+            style = "background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;",
+            "© UK Centre for Ecology & Hydrology, 2025",
+            tags$br(),
+            "Information about how we process your data can be found in our ",
+            tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice", target = "_blank"),
+            ". For further information, please contact Dr Jan Dick, jand@ceh.ac.uk."
         )
     )
 )
 
+# Add password authorisation
+ui <- shinymanager::secure_app(ui)
+
 server <- function(input, output, session) {
+    # Check credentials
+    # See https://datastorm-open.github.io/shinymanager/
+    res_auth <- shinymanager::secure_server(
+        check_credentials = shinymanager::check_credentials(.credentials)
+    )
+    output$auth_output <- renderPrint({
+        reactiveValuesToList(res_auth)
+    })
+
+
     get_persona_from_sliders <- function() {
         persona <- sapply(
             .layer_names,
@@ -113,6 +156,7 @@ server <- function(input, output, session) {
         )
         return(persona)
     }
+  
 
     # Reactive variable to track the csv file that's been selected for loading
     reactiveLoadFile <- reactiveVal("examples.csv")
