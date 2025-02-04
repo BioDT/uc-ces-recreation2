@@ -1,5 +1,6 @@
 library(shiny)
 library(leaflet)
+library(leaflet.extras)
 
 # setwd(here::here())
 print(getwd())
@@ -23,6 +24,7 @@ UKCEH_theme <- bs_add_rules(
     password = Sys.getenv("APP_PASSWORD")
 )
 
+.raster_dir <- "data/bush/one_hot/"
 .persona_dir <- "personas"
 .example_persona_csv <- file.path(.persona_dir, "examples.csv")
 .config <- load_config()
@@ -80,44 +82,58 @@ ui <- fluidPage(
     # Add title, contact address and privacy notice in combined title panel + header
     fluidRow(
         style = "background-color: #f8f9fa;",
-        UKCEH_titlePanel("BioDT: Recreational Potential Model"),
+        UKCEH_titlePanel("BioDT: Recreational Potential Model for Scotland")
     ),
     fluidRow(
         column(
-            width = 6,
-            fluidRow(
-                column(width = 3, actionButton("loadButton", "Load Persona")),
-                column(width = 3, actionButton("saveButton", "Save Persona")),
-                column(width = 6, actionButton("updateButton", "Update Map"))
-            ),
-            verbatimTextOutput("userInfo"),
+            width = 5,
             tabsetPanel(
                 tabPanel("About", about_html),
                 tabPanel("SLSRA", create_sliders("SLSRA")),
                 tabPanel("FIPS_N", create_sliders("FIPS_N")),
                 tabPanel("FIPS_I", create_sliders("FIPS_I")),
                 tabPanel("Water", create_sliders("Water"))
-            ),
+            )
         ),
         column(
-            width = 6,
-            radioButtons(
-                "layerSelect",
-                "Select Layer",
-                choices = list(
-                    "SLSRA" = 1,
-                    "FIPS_N" = 2,
-                    "FIPS_I" = 3,
-                    "Water" = 4,
-                    "Recreational Potential" = 5
+            width = 7,
+            fluidRow(
+                column(
+                    width = 8,
+                    actionButton("loadButton", "Load Persona"),
+                    actionButton("saveButton", "Save Persona"),
+                    actionButton("updateButton", "Update Map"),
+                    radioButtons(
+                        "layerSelect",
+                        "",
+                        choices = list(
+                            "SLSRA" = 1,
+                            "FIPS_N" = 2,
+                            "FIPS_I" = 3,
+                            "Water" = 4,
+                            "Recreational Potential" = 5
+                        ),
+                        selected = 5,
+                        inline = TRUE
+                    )
                 ),
-                selected = 5,
-                inline = TRUE
+                column(
+                    width = 4,
+                    sliderInput(
+                        "opacity",
+                        "Layer Opacity",
+                        min = 0,
+                        max = 1,
+                        value = 0.8,
+                        step = 0.1
+                    )
+                )
             ),
-            leafletOutput("map")
+            verbatimTextOutput("userInfo"),
+            leafletOutput("map"),
         ),
         tags$div(
-            style = "background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;",
+            style = "text-align: center; background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;",
             "© UK Centre for Ecology & Hydrology, 2025",
         )
     )
@@ -147,11 +163,15 @@ server <- function(input, output, session) {
     }
 
 
+
     # Reactive variable to track the csv file that's been selected for loading
     reactiveLoadFile <- reactiveVal("examples.csv")
 
     # Reactive variable for caching computed raster
     reactiveLayers <- reactiveVal()
+
+    # Reactive variable for coordinates of user-drawn bbox
+    reactiveExtent <- reactiveVal()
 
     # ------------------------------------------------------ Loading
 
@@ -252,16 +272,33 @@ server <- function(input, output, session) {
         removeModal()
     })
 
+
+    # --------------------------------------------------------------- Map
     # Initialize Leaflet map
     output$map <- renderLeaflet({
         leaflet() |>
             setView(lng = -4.2026, lat = 56.4907, zoom = 7) |>
             addTiles() |>
-            addLegend(pal = palette, values = c(0, 1), title = "Values")
+            addLegend(pal = palette, values = c(0, 1), title = "Values") |>
+            addFullscreenControl() |>
+            addDrawToolbar(
+                targetGroup = "drawnItems",
+                singleFeature = TRUE,
+                rectangleOptions = drawRectangleOptions(
+                    shapeOptions = drawShapeOptions(
+                        color = "#FF0000",
+                        weight = 2,
+                        fillOpacity = 0
+                    )
+                ),
+                polylineOptions = FALSE,
+                polygonOptions = FALSE,
+                circleOptions = FALSE,
+                markerOptions = FALSE,
+                circleMarkerOptions = FALSE
+            )
     })
 
-
-    # --------------------------------------------------------------- Map
     # Grabs cached layers and updates map with current layer selection
     update_map <- function() {
         req(reactiveLayers())
@@ -271,15 +308,48 @@ server <- function(input, output, session) {
 
         leafletProxy("map") |>
             clearImages() |>
-            addRasterImage(curr_layer, colors = palette, opacity = 0.8)
+            addRasterImage(curr_layer, colors = palette, opacity = input$opacity)
     }
+
+    # Draw rectangle
+    # NOTE: input$map_draw_new_feature automatically created by leaflet.extras
+    # when using addDrawToolbar()
+    observeEvent(input$map_draw_new_feature, {
+        bbox <- input$map_draw_new_feature
+
+        stopifnot(bbox$geometry$type == "Polygon")
+
+        # This is pretty hacky - must be a cleaner way...
+        coords <- bbox$geometry$coordinates[[1]]
+        lons <- unlist(sapply(coords, function(coord) coord[1]))
+        lats <- unlist(sapply(coords, function(coord) coord[2]))
+        xmin <- min(lons)
+        xmax <- max(lons)
+        ymin <- min(lats)
+        ymax <- max(lats)
+
+        # Fit the map to these bounds
+        leafletProxy("map") |>
+            fitBounds(lng1 = xmin, lat1 = ymin, lng2 = xmax, lat2 = ymax)
+
+        # These coords are in EPSSG:4326, but our rasters are EPSG:27700
+        extent_4326 <- terra::ext(xmin, xmax, ymin, ymax)
+        extent_27700 <- terra::project(extent_4326, from = "EPSG:4326", to = "EPSG:27700")
+
+        # Store the SpatExtent as a reactive value
+        reactiveExtent(extent_27700)
+    })
 
     # Recompute raster when update button is clicked
     observeEvent(input$updateButton, {
         persona <- get_persona_from_sliders()
 
         msg <- capture.output(
-            layers <- model::compute_potential(persona, raster_dir = "data/one_hot/"),
+            layers <- model::compute_potential(
+                persona,
+                raster_dir = .raster_dir,
+                bbox = reactiveExtent()
+            ),
             type = "message"
         )
 
@@ -287,17 +357,21 @@ server <- function(input, output, session) {
             cat(msg, sep = "\n")
         })
 
-        # TODO: do this in compute_potential
-        layers <- terra::sapp(layers, model::rescale_to_unit_interval)
-
         # Update reactiveLayers with new raster
         reactiveLayers(layers)
 
         update_map()
+        
+
     })
 
     # Update map using cached values when layer selection changes
     observeEvent(input$layerSelect, {
+        update_map()
+    })
+    
+    # Update map using cached values when opacity changes
+    observeEvent(input$opacity, {
         update_map()
     })
 }

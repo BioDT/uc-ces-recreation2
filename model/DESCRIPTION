@@ -23,8 +23,16 @@ Imports:
     readr,
     terra
 Suggests:
+    bslib
     devtools,
+    here,
+    knitr,
+    leaflet,
+    leaflet.extras,
     lintr,
+    rsconnect,
+    shiny,
+    shinymanager,
     styler,
     testthat,
     usethis

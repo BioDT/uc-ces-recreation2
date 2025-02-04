@@ -32,11 +32,12 @@ compute_potential <- function(persona, raster_dir, bbox = NULL) {
         load_raster(bbox) |>
         compute_component(persona)
 
-    # Sum and rescale
-    potential <- rescale_to_unit_interval(slsra + fips_n + fips_i + water)
+    total <- slsra + fips_n + fips_i + water
 
-    stacked <- c(slsra, fips_n, fips_i, water, potential)
-    names(stacked) <- c("SLSRA", "FIPS_N", "FIPS_I", "Water", "Recreational_Potential")
+    layers <- c(slsra, fips_n, fips_i, water, total)
+    names(layers) <- c("SLSRA", "FIPS_N", "FIPS_I", "Water", "Recreational_Potential")
 
-    return(stacked)
+    layers <- terra::sapp(layers, rescale_to_unit_interval)
+
+    return(layers)
 }
