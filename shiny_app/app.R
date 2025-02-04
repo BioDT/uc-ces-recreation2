@@ -5,19 +5,10 @@ library(leaflet.extras)
 # setwd(here::here())
 print(getwd())
 devtools::load_all("../model")
-source("about.R")
 
-# UKCEH theming
-devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
+source("about.R")  # contains about_html
+source("theme.R")  # contains custom_theme, custom_titlePanel
 
-# Modify theme so buttons are visible...
-UKCEH_theme <- bs_add_rules(
-    UKCEH_theme,
-    ".btn {
-    color: black;
-    border-color: darkgrey;
-    }"
-)
 
 .credentials <- data.frame(
     user = Sys.getenv("APP_USERNAME"),
@@ -72,7 +63,7 @@ palette <- colorNumeric(
 )
 
 ui <- fluidPage(
-    theme = UKCEH_theme,
+    theme = custom_theme,
     tags$head(
         tags$style(HTML("
             html, body {height: 100%;}
@@ -82,7 +73,7 @@ ui <- fluidPage(
     # Add title, contact address and privacy notice in combined title panel + header
     fluidRow(
         style = "background-color: #f8f9fa;",
-        UKCEH_titlePanel("BioDT: Recreational Potential Model for Scotland")
+        custom_titlePanel("Recreational Potential Model for Scotland")
     ),
     fluidRow(
         column(
@@ -144,7 +135,6 @@ ui <- shinymanager::secure_app(ui)
 
 server <- function(input, output, session) {
     # Check credentials
-    # See https://datastorm-open.github.io/shinymanager/
     res_auth <- shinymanager::secure_server(
         check_credentials = shinymanager::check_credentials(.credentials)
     )
@@ -161,8 +151,6 @@ server <- function(input, output, session) {
         )
         return(persona)
     }
-
-
 
     # Reactive variable to track the csv file that's been selected for loading
     reactiveLoadFile <- reactiveVal("examples.csv")
