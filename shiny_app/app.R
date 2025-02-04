@@ -1,241 +1,367 @@
-# =============================================================
-# Project Name: BIODT
-# Last Updated: 2025-01-21 by jmarshrossney
-# =============================================================
-
-library(bslib)
-library(here)
-library(jsonlite)
-library(leaflet)
 library(shiny)
-library(shinyjs)
-library(shinymanager)
-library(sf)
-library(tidyverse)
-library(terra)
-library(units)
-#library(parallel)
+library(leaflet)
+library(leaflet.extras)
 
-rm(list = ls())
+# setwd(here::here())
+print(getwd())
+devtools::load_all("../model")
 
-setwd(here::here())
+source("about.R")  # contains about_html
+source("theme.R")  # contains custom_theme, custom_titlePanel
 
-# UKCEH theming
-devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
 
-# Modify theme so buttons are visible...
-UKCEH_theme <- bs_add_rules(
-  UKCEH_theme,
-  ".btn {
-    color: black;
-    border-color: darkgrey; 
-  }"
+.credentials <- data.frame(
+    user = Sys.getenv("APP_USERNAME"),
+    password = Sys.getenv("APP_PASSWORD")
 )
 
-# Function to check, install, and load packages
-#check_install_load <- function(pkg) {
-#  if (!requireNamespace(pkg, quietly = TRUE)) {
-#    install.packages(pkg, dependencies = TRUE)
-#  }
-#  library(pkg, character.only = TRUE)
-#}
+.raster_dir <- "data/bush/one_hot/"
+.persona_dir <- "personas"
+.example_persona_csv <- file.path(.persona_dir, "examples.csv")
+.config <- load_config()
+.layer_info <- setNames(.config[["Description"]], .config[["Name"]])
+.layer_names <- names(.layer_info)
 
-# List of packages to check, install, and load
-#packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "terra", "units", "parallel")
+list_persona_files <- function() {
+    return(list.files(path = .persona_dir, pattern = "\\.csv$", full.names = FALSE))
+}
 
-# Loop through each package
-#for (pkg in packages_to_load) {
-#  check_install_load(pkg)
-#}
+list_personas_in_file <- function(file_name) {
+    personas <- names(read.csv(file.path(.persona_dir, file_name), nrows = 1))
+    return(personas[personas != "index"])
+}
 
+create_sliders <- function(component) {
+    layer_names_this_component <- .layer_names[startsWith(.layer_names, component)]
+    sliders <- lapply(layer_names_this_component, function(layer_name) {
+        sliderInput(
+            layer_name,
+            label = .layer_info[[layer_name]],
+            min = 0,
+            max = 10,
+            value = 0,
+            round = TRUE,
+            ticks = FALSE
+        )
+    })
 
-#Load the paths and functions
-home_folder             <- paste0(getwd(), "/")
-folder_ui_functions     <- "Functions/RShiny_Functions/UI_Functions/"
-folder_server_functions <- "Functions/RShiny_Functions/Server_Functions/"
-folder_utils_functions  <- "Functions/RFunctions/"
+    # Divide sliders into two rows
+    n <- length(sliders)
+    sliders_left <- sliders[seq(1, n, by = 2)]
+    sliders_right <- sliders[seq(2, n, by = 2)]
 
-# Source code for UI side
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page1.R")) # UI Page for: Selecting / uploading a shapefile
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page1b.R")) # UI Page for: Selecting / creating a Persona
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page2.R")) # UI Page for: Parameterizing model component (SLSRA)
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page3.R")) # UI Page for: Parameterizing model component (FIPS_N)
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page4.R")) # UI Page for: Parameterizing model component (FIPS_I)
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page5.R")) # UI Page for: Parameterizing model component (Water), including submitting and exporting values
-source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page6.R")) # UI Page for: Running and visualizing model, including exporting output
-
-# Source code for server side
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page1.R")) # Server page for: Selecting / uploading a shapefile
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page1b.R")) # Server page for: Selecting / creating a Persona
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page2.R")) # Server page for: Parameterizing model component (SLSRA)
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page3.R")) # Server page for: Parameterizing model component (FIPS_N)
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page4.R")) # Server page for: Parameterizing model component (FIPS_I)
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page5.R")) # Server page for: Parameterizing model component (Water), including submitting and exporting values
-source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page6.R")) # Server page for: Running and visualizing model, including exporting output
-
-#source functions
-source(paste0(home_folder, folder_utils_functions, "FUNC_Raster_Reclassifier_single_csv.R")) #FUNC_Raster_Reclassifier_single_csv.R
-source(paste0(home_folder, folder_utils_functions, "FUNC_Process_Raster_Proximity2.R"))
-source(paste0(home_folder, folder_utils_functions, "FUNC_Calculate_Euclidean_Distance.R"))
-source(paste0(home_folder, folder_utils_functions, "FUNC_Normalise_Rasters.R"))
-source(paste0(home_folder, folder_utils_functions, "FUNC_Crop_Rasters_by_mask.R"))
-source(paste0(home_folder, folder_utils_functions, "FUNC_Skip_Prox_on_Rasters_Without_NA.R"))
-source(paste0(home_folder, folder_utils_functions, "FUNC_Process_Area_of_Interest.R"))
-source(paste0(home_folder, folder_utils_functions, "FUNC_other_functions.R"))
-
-# Combine all UI components
-ui <- fluidPage(
-  theme = UKCEH_theme, 
-
-  # Add title, contact address and privacy notice in combined title panel + header
-  fluidRow(
-    style = "background-color: #f8f9fa;",
-    column(8, UKCEH_titlePanel("BioDT - Scotland Recreational Model")),
-    column(4,
-      tags$div(
-        style = "padding: 10px; text-align: right;",
-        div(
-          "Information about how we process your data can be found in our ",
-          tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice", target = "_blank"),
-          ". For further information, please contact Dr Jan Dick, jand@ceh.ac.uk.")
-      )
+    fluidRow(
+        column(width = 6, sliders_left),
+        column(width = 6, sliders_right)
     )
-  ),
+}
 
-  useShinyjs(),  # Initialize shinyjs
-  
-  tabsetPanel(id = "nav_panel",
-              tabPanel("Area of Interest", ui_page1()),
-              tabPanel("Select Persona", ui_page1b()),
-              tabPanel("SLSRA", ui_page2()),
-              tabPanel("FIPS_N", ui_page3()),
-              tabPanel("FIPS_I", ui_page4()),
-              tabPanel("Water", ui_page5()),
-              tabPanel("Model Run", ui_page6())
-  ),
+palette <- colorNumeric(
+    palette = "viridis",
+    domain = c(0, 1),
+    na.color = "transparent"
 )
 
-credentials <- data.frame(
-  user = Sys.getenv("APP_USERNAME"),
-  password = Sys.getenv("APP_PASSWORD")
+ui <- fluidPage(
+    theme = custom_theme,
+    tags$head(
+        tags$style(HTML("
+            html, body {height: 100%;}
+            #map {height: 80vh !important;}
+        "))
+    ),
+    # Add title, contact address and privacy notice in combined title panel + header
+    fluidRow(
+        style = "background-color: #f8f9fa;",
+        custom_titlePanel("Recreational Potential Model for Scotland")
+    ),
+    fluidRow(
+        column(
+            width = 5,
+            tabsetPanel(
+                tabPanel("About", about_html),
+                tabPanel("SLSRA", create_sliders("SLSRA")),
+                tabPanel("FIPS_N", create_sliders("FIPS_N")),
+                tabPanel("FIPS_I", create_sliders("FIPS_I")),
+                tabPanel("Water", create_sliders("Water"))
+            )
+        ),
+        column(
+            width = 7,
+            fluidRow(
+                column(
+                    width = 8,
+                    actionButton("loadButton", "Load Persona"),
+                    actionButton("saveButton", "Save Persona"),
+                    actionButton("updateButton", "Update Map"),
+                    radioButtons(
+                        "layerSelect",
+                        "",
+                        choices = list(
+                            "SLSRA" = 1,
+                            "FIPS_N" = 2,
+                            "FIPS_I" = 3,
+                            "Water" = 4,
+                            "Recreational Potential" = 5
+                        ),
+                        selected = 5,
+                        inline = TRUE
+                    )
+                ),
+                column(
+                    width = 4,
+                    sliderInput(
+                        "opacity",
+                        "Layer Opacity",
+                        min = 0,
+                        max = 1,
+                        value = 0.8,
+                        step = 0.1
+                    )
+                )
+            ),
+            verbatimTextOutput("userInfo"),
+            leafletOutput("map"),
+        ),
+        tags$div(
+            style = "text-align: center; background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;",
+            "© UK Centre for Ecology & Hydrology, 2025",
+        )
+    )
 )
 
 # Add password authorisation
-ui <- secure_app(ui)
+ui <- shinymanager::secure_app(ui)
 
-# Define main server logic
 server <- function(input, output, session) {
+    # Check credentials
+    res_auth <- shinymanager::secure_server(
+        check_credentials = shinymanager::check_credentials(.credentials)
+    )
+    output$auth_output <- renderPrint({
+        reactiveValuesToList(res_auth)
+    })
 
-  # Check credentials
-  # See https://datastorm-open.github.io/shinymanager/
-  res_auth <- secure_server(
-    check_credentials = check_credentials(credentials)
-  )
-  output$auth_output <- renderPrint({
-    reactiveValuesToList(res_auth)
-  })
-  
-  # Initialize reactive values for storing form data
-  shapefile_name_global <- reactiveValues(input_text = NULL)
-  persona_id_global     <- reactiveValues(input_text = NULL)
-  skip_to_page6         <- reactiveValues(skip = FALSE)
-  all_form_data <- reactiveValues(data = data.frame(Name = character(),
-                                                    Response = character(),
-                                                    stringsAsFactors = FALSE)
-                                  )
-  # Define the CSV file path to the master dataset containing raster values for reclassifying
-  csv_path <- paste0(home_folder, "Data/input/MASTER_BIODT_RP_SCOT_RASTER_VALUES.csv")
-  
-  # Load the existing CSV into form_data at the start
-  form_data <- reactiveVal(read.csv(csv_path, stringsAsFactors = FALSE))
-  
-  #direct to input/output folder
-  input_folder <- paste0(home_folder, "Data/input/")
-  output_folder <- paste0(home_folder, "Data/output/")
-  
-  #define the directory to contain raw shapefiles
-  upload_dir <- paste0(home_folder, "Data/input/Raw_Shapefile/")
-  
-  #define the directory that contains the personas files
-  persona_dir <- paste0(home_folder, "Data/input/Persona_Loaded/")
-  
-  #define the directory that will contain the boundaries files
-  boundary_dir <- paste0(home_folder, "Data/input/Boundary_Data/")
-  
-  #define the directory that has the raster files files
-  raster_folder <- paste0(input_folder, "Processed_Data/")
-  
-  #path to temp folder
-  temp_folder <- paste0(output_folder, "temp_folder/")
-  
-  # Call server logic for each page
-  server_page1(input, output, session, shapefile_name_global, home_folder, upload_dir)
-  server_page1b(input, output, session, persona_id_global, skip_to_page6, home_folder, persona_dir)
-  server_page2(input, output, session, all_form_data)
-  server_page3(input, output, session, all_form_data)
-  server_page4(input, output, session, all_form_data)
-  server_page5(input, output, session, all_form_data, form_data, csv_path, home_folder)
-  server_page6(input, output, session, shapefile_name_global, persona_id_global, home_folder,
-               input_folder, output_folder, persona_dir, upload_dir, boundary_dir, raster_folder, temp_folder
-               )
-  
-  # Navigation logic
-  observeEvent(input$next1, {
-    updateTabsetPanel(session, "nav_panel", selected = "Select Persona")
-  })
-  
-  observeEvent(input$back6, {
-    updateTabsetPanel(session, "nav_panel", selected = "Area of Interest")
-  })
-  
-  observeEvent(input$next6, {
-    if (skip_to_page6$skip) {
-      updateTabsetPanel(session, "nav_panel", selected = "Model Run")
-    } else {
-      updateTabsetPanel(session, "nav_panel", selected = "SLSRA")
+
+    get_persona_from_sliders <- function() {
+        persona <- sapply(
+            .layer_names,
+            function(layer_name) input[[layer_name]],
+            USE.NAMES = TRUE
+        )
+        return(persona)
     }
-  })
-  
-  observeEvent(input$back1, {
-    updateTabsetPanel(session, "nav_panel", selected = "Select Persona")
-  })
-  
-  observeEvent(input$next2, {
-    updateTabsetPanel(session, "nav_panel", selected = "FIPS_N")
-  })
-  
-  observeEvent(input$back2, {
-    updateTabsetPanel(session, "nav_panel", selected = "SLSRA")
-  })
-  
-  observeEvent(input$next3, {
-    updateTabsetPanel(session, "nav_panel", selected = "FIPS_I")
-  })
-  
-  observeEvent(input$back3, {
-    updateTabsetPanel(session, "nav_panel", selected = "FIPS_N")
-  })
-  
-  observeEvent(input$next4, {
-    updateTabsetPanel(session, "nav_panel", selected = "Water")
-  })
-  
-  observeEvent(input$back4, {
-    updateTabsetPanel(session, "nav_panel", selected = "FIPS_I")
-  })
-  
-  observeEvent(input$next5, {
-    updateTabsetPanel(session, "nav_panel", selected = "Model Run")
-  })
-  
-  observeEvent(input$back5, {
-    updateTabsetPanel(session, "nav_panel", selected = "Water")
-  })
 
-  # This helps with debugging
-  options(shiny.fullstacktrace=TRUE)
+    # Reactive variable to track the csv file that's been selected for loading
+    reactiveLoadFile <- reactiveVal("examples.csv")
 
+    # Reactive variable for caching computed raster
+    reactiveLayers <- reactiveVal()
+
+    # Reactive variable for coordinates of user-drawn bbox
+    reactiveExtent <- reactiveVal()
+
+    # ------------------------------------------------------ Loading
+
+    # Open a dialogue box to load a new persona
+    observeEvent(input$loadButton, {
+        showModal(
+            modalDialog(
+                title = "Load Persona",
+                selectInput(
+                    "loadFileSelect",
+                    "Select existing file",
+                    choices = list_persona_files()
+                ),
+                selectInput(
+                    "loadPersonaSelect",
+                    "Select persona",
+                    choices = NULL
+                ),
+                footer = tagList(
+                    modalButton("Cancel"),
+                    actionButton("confirmLoad", "Load")
+                )
+            )
+        )
+    })
+    observeEvent(input$loadFileSelect, {
+        req(input$loadFileSelect)
+        reactiveLoadFile(input$loadFileSelect)
+    })
+    observeEvent(reactiveLoadFile(), {
+        updateSelectInput(
+            session,
+            "loadPersonaSelect",
+            choices = list_personas_in_file(reactiveLoadFile())
+        )
+    })
+    observeEvent(input$confirmLoad, {
+        loaded_persona <- model::load_persona(
+            file.path(.persona_dir, reactiveLoadFile()),
+            input$loadPersonaSelect
+        )
+        # Apply new persona to sliders
+        lapply(names(loaded_persona), function(layer_name) {
+            updateSliderInput(
+                session,
+                inputId = layer_name,
+                value = loaded_persona[[layer_name]]
+            )
+        })
+
+        output$userInfo <- renderPrint({
+            paste("Loaded persona", input$loadPersonaSelect, "from file", reactiveLoadFile())
+        })
+
+        removeModal()
+    })
+
+    # ------------------------------------------------------ Saving
+    observeEvent(input$saveButton, {
+        showModal(
+            modalDialog(
+                title = "Save Persona",
+                selectInput(
+                    "saveFileSelect",
+                    "Select existing file",
+                    choices = c("", list_persona_files())
+                ),
+                textInput("saveFileName", "Or enter a new file name"),
+                textInput(
+                    "savePersonaName",
+                    "Enter a name for the persona",
+                    value = NULL
+                ),
+                footer = tagList(
+                    modalButton("Cancel"),
+                    actionButton("confirmSave", "Save")
+                )
+            )
+        )
+    })
+    observeEvent(input$confirmSave, {
+        file_name <- if (input$saveFileName != "") input$saveFileName else input$saveFileSelect
+        persona_name <- input$savePersonaName
+
+        msg <- capture.output(
+            model::save_persona(
+                persona = get_persona_from_sliders(),
+                csv_path = file.path(.persona_dir, file_name),
+                name = persona_name
+            ),
+            type = "message"
+        )
+
+        output$userInfo <- renderPrint({
+            cat(msg, sep = "\n")
+        })
+
+        removeModal()
+    })
+
+
+    # --------------------------------------------------------------- Map
+    # Initialize Leaflet map
+    output$map <- renderLeaflet({
+        leaflet() |>
+            setView(lng = -4.2026, lat = 56.4907, zoom = 7) |>
+            addTiles() |>
+            addLegend(pal = palette, values = c(0, 1), title = "Values") |>
+            addFullscreenControl() |>
+            addDrawToolbar(
+                targetGroup = "drawnItems",
+                singleFeature = TRUE,
+                rectangleOptions = drawRectangleOptions(
+                    shapeOptions = drawShapeOptions(
+                        color = "#FF0000",
+                        weight = 2,
+                        fillOpacity = 0
+                    )
+                ),
+                polylineOptions = FALSE,
+                polygonOptions = FALSE,
+                circleOptions = FALSE,
+                markerOptions = FALSE,
+                circleMarkerOptions = FALSE
+            )
+    })
+
+    # Grabs cached layers and updates map with current layer selection
+    update_map <- function() {
+        req(reactiveLayers())
+
+        layers <- reactiveLayers()
+        curr_layer <- layers[[as.numeric(input$layerSelect)]]
+
+        leafletProxy("map") |>
+            clearImages() |>
+            addRasterImage(curr_layer, colors = palette, opacity = input$opacity)
+    }
+
+    # Draw rectangle
+    # NOTE: input$map_draw_new_feature automatically created by leaflet.extras
+    # when using addDrawToolbar()
+    observeEvent(input$map_draw_new_feature, {
+        bbox <- input$map_draw_new_feature
+
+        stopifnot(bbox$geometry$type == "Polygon")
+
+        # This is pretty hacky - must be a cleaner way...
+        coords <- bbox$geometry$coordinates[[1]]
+        lons <- unlist(sapply(coords, function(coord) coord[1]))
+        lats <- unlist(sapply(coords, function(coord) coord[2]))
+        xmin <- min(lons)
+        xmax <- max(lons)
+        ymin <- min(lats)
+        ymax <- max(lats)
+
+        # Fit the map to these bounds
+        leafletProxy("map") |>
+            fitBounds(lng1 = xmin, lat1 = ymin, lng2 = xmax, lat2 = ymax)
+
+        # These coords are in EPSSG:4326, but our rasters are EPSG:27700
+        extent_4326 <- terra::ext(xmin, xmax, ymin, ymax)
+        extent_27700 <- terra::project(extent_4326, from = "EPSG:4326", to = "EPSG:27700")
+
+        # Store the SpatExtent as a reactive value
+        reactiveExtent(extent_27700)
+    })
+
+    # Recompute raster when update button is clicked
+    observeEvent(input$updateButton, {
+        persona <- get_persona_from_sliders()
+
+        msg <- capture.output(
+            layers <- model::compute_potential(
+                persona,
+                raster_dir = .raster_dir,
+                bbox = reactiveExtent()
+            ),
+            type = "message"
+        )
+
+        output$userInfo <- renderPrint({
+            cat(msg, sep = "\n")
+        })
+
+        # Update reactiveLayers with new raster
+        reactiveLayers(layers)
+
+        update_map()
+        
+
+    })
+
+    # Update map using cached values when layer selection changes
+    observeEvent(input$layerSelect, {
+        update_map()
+    })
+    
+    # Update map using cached values when opacity changes
+    observeEvent(input$opacity, {
+        update_map()
+    })
 }
 
-# Run the application 
 shinyApp(ui = ui, server = server)

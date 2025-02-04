@@ -1,0 +1,241 @@
+# =============================================================
+# Project Name: BIODT
+# Last Updated: 2025-01-21 by jmarshrossney
+# =============================================================
+
+library(bslib)
+library(here)
+library(jsonlite)
+library(leaflet)
+library(shiny)
+library(shinyjs)
+library(shinymanager)
+library(sf)
+library(tidyverse)
+library(terra)
+library(units)
+#library(parallel)
+
+rm(list = ls())
+
+setwd(here::here())
+
+# UKCEH theming
+devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
+
+# Modify theme so buttons are visible...
+UKCEH_theme <- bs_add_rules(
+  UKCEH_theme,
+  ".btn {
+    color: black;
+    border-color: darkgrey; 
+  }"
+)
+
+# Function to check, install, and load packages
+#check_install_load <- function(pkg) {
+#  if (!requireNamespace(pkg, quietly = TRUE)) {
+#    install.packages(pkg, dependencies = TRUE)
+#  }
+#  library(pkg, character.only = TRUE)
+#}
+
+# List of packages to check, install, and load
+#packages_to_load <- c("tidyverse", "leaflet", "sf", "jsonlite", "shinyjs", "shiny", "terra", "units", "parallel")
+
+# Loop through each package
+#for (pkg in packages_to_load) {
+#  check_install_load(pkg)
+#}
+
+
+#Load the paths and functions
+home_folder             <- paste0(getwd(), "/")
+folder_ui_functions     <- "Functions/RShiny_Functions/UI_Functions/"
+folder_server_functions <- "Functions/RShiny_Functions/Server_Functions/"
+folder_utils_functions  <- "Functions/RFunctions/"
+
+# Source code for UI side
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page1.R")) # UI Page for: Selecting / uploading a shapefile
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page1b.R")) # UI Page for: Selecting / creating a Persona
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page2.R")) # UI Page for: Parameterizing model component (SLSRA)
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page3.R")) # UI Page for: Parameterizing model component (FIPS_N)
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page4.R")) # UI Page for: Parameterizing model component (FIPS_I)
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page5.R")) # UI Page for: Parameterizing model component (Water), including submitting and exporting values
+source(paste0(home_folder, folder_ui_functions, "FUNC_UI_Page6.R")) # UI Page for: Running and visualizing model, including exporting output
+
+# Source code for server side
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page1.R")) # Server page for: Selecting / uploading a shapefile
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page1b.R")) # Server page for: Selecting / creating a Persona
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page2.R")) # Server page for: Parameterizing model component (SLSRA)
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page3.R")) # Server page for: Parameterizing model component (FIPS_N)
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page4.R")) # Server page for: Parameterizing model component (FIPS_I)
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page5.R")) # Server page for: Parameterizing model component (Water), including submitting and exporting values
+source(paste0(home_folder, folder_server_functions, "FUNC_Server_Page6.R")) # Server page for: Running and visualizing model, including exporting output
+
+#source functions
+source(paste0(home_folder, folder_utils_functions, "FUNC_Raster_Reclassifier_single_csv.R")) #FUNC_Raster_Reclassifier_single_csv.R
+source(paste0(home_folder, folder_utils_functions, "FUNC_Process_Raster_Proximity2.R"))
+source(paste0(home_folder, folder_utils_functions, "FUNC_Calculate_Euclidean_Distance.R"))
+source(paste0(home_folder, folder_utils_functions, "FUNC_Normalise_Rasters.R"))
+source(paste0(home_folder, folder_utils_functions, "FUNC_Crop_Rasters_by_mask.R"))
+source(paste0(home_folder, folder_utils_functions, "FUNC_Skip_Prox_on_Rasters_Without_NA.R"))
+source(paste0(home_folder, folder_utils_functions, "FUNC_Process_Area_of_Interest.R"))
+source(paste0(home_folder, folder_utils_functions, "FUNC_other_functions.R"))
+
+# Combine all UI components
+ui <- fluidPage(
+  theme = UKCEH_theme, 
+
+  # Add title, contact address and privacy notice in combined title panel + header
+  fluidRow(
+    style = "background-color: #f8f9fa;",
+    column(8, UKCEH_titlePanel("BioDT - Scotland Recreational Model")),
+    column(4,
+      tags$div(
+        style = "padding: 10px; text-align: right;",
+        div(
+          "Information about how we process your data can be found in our ",
+          tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice", target = "_blank"),
+          ". For further information, please contact Dr Jan Dick, jand@ceh.ac.uk.")
+      )
+    )
+  ),
+
+  useShinyjs(),  # Initialize shinyjs
+  
+  tabsetPanel(id = "nav_panel",
+              tabPanel("Area of Interest", ui_page1()),
+              tabPanel("Select Persona", ui_page1b()),
+              tabPanel("SLSRA", ui_page2()),
+              tabPanel("FIPS_N", ui_page3()),
+              tabPanel("FIPS_I", ui_page4()),
+              tabPanel("Water", ui_page5()),
+              tabPanel("Model Run", ui_page6())
+  ),
+)
+
+credentials <- data.frame(
+  user = Sys.getenv("APP_USERNAME"),
+  password = Sys.getenv("APP_PASSWORD")
+)
+
+# Add password authorisation
+ui <- secure_app(ui)
+
+# Define main server logic
+server <- function(input, output, session) {
+
+  # Check credentials
+  # See https://datastorm-open.github.io/shinymanager/
+  res_auth <- secure_server(
+    check_credentials = check_credentials(credentials)
+  )
+  output$auth_output <- renderPrint({
+    reactiveValuesToList(res_auth)
+  })
+  
+  # Initialize reactive values for storing form data
+  shapefile_name_global <- reactiveValues(input_text = NULL)
+  persona_id_global     <- reactiveValues(input_text = NULL)
+  skip_to_page6         <- reactiveValues(skip = FALSE)
+  all_form_data <- reactiveValues(data = data.frame(Name = character(),
+                                                    Response = character(),
+                                                    stringsAsFactors = FALSE)
+                                  )
+  # Define the CSV file path to the master dataset containing raster values for reclassifying
+  csv_path <- paste0(home_folder, "Data/input/MASTER_BIODT_RP_SCOT_RASTER_VALUES.csv")
+  
+  # Load the existing CSV into form_data at the start
+  form_data <- reactiveVal(read.csv(csv_path, stringsAsFactors = FALSE))
+  
+  #direct to input/output folder
+  input_folder <- paste0(home_folder, "Data/input/")
+  output_folder <- paste0(home_folder, "Data/output/")
+  
+  #define the directory to contain raw shapefiles
+  upload_dir <- paste0(home_folder, "Data/input/Raw_Shapefile/")
+  
+  #define the directory that contains the personas files
+  persona_dir <- paste0(home_folder, "Data/input/Persona_Loaded/")
+  
+  #define the directory that will contain the boundaries files
+  boundary_dir <- paste0(home_folder, "Data/input/Boundary_Data/")
+  
+  #define the directory that has the raster files files
+  raster_folder <- paste0(input_folder, "Processed_Data/")
+  
+  #path to temp folder
+  temp_folder <- paste0(output_folder, "temp_folder/")
+  
+  # Call server logic for each page
+  server_page1(input, output, session, shapefile_name_global, home_folder, upload_dir)
+  server_page1b(input, output, session, persona_id_global, skip_to_page6, home_folder, persona_dir)
+  server_page2(input, output, session, all_form_data)
+  server_page3(input, output, session, all_form_data)
+  server_page4(input, output, session, all_form_data)
+  server_page5(input, output, session, all_form_data, form_data, csv_path, home_folder)
+  server_page6(input, output, session, shapefile_name_global, persona_id_global, home_folder,
+               input_folder, output_folder, persona_dir, upload_dir, boundary_dir, raster_folder, temp_folder
+               )
+  
+  # Navigation logic
+  observeEvent(input$next1, {
+    updateTabsetPanel(session, "nav_panel", selected = "Select Persona")
+  })
+  
+  observeEvent(input$back6, {
+    updateTabsetPanel(session, "nav_panel", selected = "Area of Interest")
+  })
+  
+  observeEvent(input$next6, {
+    if (skip_to_page6$skip) {
+      updateTabsetPanel(session, "nav_panel", selected = "Model Run")
+    } else {
+      updateTabsetPanel(session, "nav_panel", selected = "SLSRA")
+    }
+  })
+  
+  observeEvent(input$back1, {
+    updateTabsetPanel(session, "nav_panel", selected = "Select Persona")
+  })
+  
+  observeEvent(input$next2, {
+    updateTabsetPanel(session, "nav_panel", selected = "FIPS_N")
+  })
+  
+  observeEvent(input$back2, {
+    updateTabsetPanel(session, "nav_panel", selected = "SLSRA")
+  })
+  
+  observeEvent(input$next3, {
+    updateTabsetPanel(session, "nav_panel", selected = "FIPS_I")
+  })
+  
+  observeEvent(input$back3, {
+    updateTabsetPanel(session, "nav_panel", selected = "FIPS_N")
+  })
+  
+  observeEvent(input$next4, {
+    updateTabsetPanel(session, "nav_panel", selected = "Water")
+  })
+  
+  observeEvent(input$back4, {
+    updateTabsetPanel(session, "nav_panel", selected = "FIPS_I")
+  })
+  
+  observeEvent(input$next5, {
+    updateTabsetPanel(session, "nav_panel", selected = "Model Run")
+  })
+  
+  observeEvent(input$back5, {
+    updateTabsetPanel(session, "nav_panel", selected = "Water")
+  })
+
+  # This helps with debugging
+  options(shiny.fullstacktrace=TRUE)
+
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)

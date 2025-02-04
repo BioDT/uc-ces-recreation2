@@ -21,20 +21,35 @@ na_to_zero <- function(raster) {
 
 ## Take original (contaminated) data and crop to Bush estate
 
-```r
+```{r}
+# Bush
 crop_area <- vect("../Data/input/Raw_Shapefile/Bush/Bush.shp")
-data_dir <- "../Data/input/Processed_Data/"
-output_dir <- "data/original"
+output_dir <- "data/bush/original/"
 
-slsra <- file.path(data_dir, "SLSRA.tif") |>
+# Scotland
+#crop_area <- ext(-10000, 660000, 460000, 1220000)
+#output_dir <- "data/scotland/original/"
+
+data_dir <- "../Data/input/Processed_Data/"
+```
+```r
+file.path(data_dir, "Water.tif") |>
   rast() |>
   crop(crop_area) |>
   round() |>
+  writeRaster(filename = file.path(output_dir, "Water.tif"))
 
+```
 
-plot(slsra)
+```{r}
+slsra <- file.path(data_dir, "SLSRA.tif") |>
+  rast() |>
+  crop(crop_area) |>
+  round()
 
 writeRaster(slsra, filename = file.path(output_dir, "SLSRA.tif"), overwrite = TRUE)
+
+rm(slsra)
 
 fips_n <- file.path(data_dir, "FIPS_N.tif") |>
   rast() |>
@@ -43,7 +58,9 @@ fips_n <- file.path(data_dir, "FIPS_N.tif") |>
 
 writeRaster(fips_n, filename = file.path(output_dir, "FIPS_N.tif"), overwrite = TRUE)
 
-plot(fips_n)
+rm(fips_n)
+
+#plot(fips_n)
 
 fips_n_slope <- file.path(data_dir, "FIPS_N_Slope.tif") |>
   rast() |>
@@ -51,7 +68,9 @@ fips_n_slope <- file.path(data_dir, "FIPS_N_Slope.tif") |>
 
 writeRaster(fips_n_slope, filename = file.path(output_dir, "FIPS_N_Slope.tif"), overwrite = TRUE)
 
-plot(fips_n_slope)
+rm(fips_n_slope)
+
+#plot(fips_n_slope)
 
 fips_i <- file.path(data_dir, "FIPS_I.tif") |>
   rast() |>
@@ -60,7 +79,9 @@ fips_i <- file.path(data_dir, "FIPS_I.tif") |>
 
 writeRaster(fips_i, filename = file.path(output_dir, "FIPS_I.tif"), overwrite = TRUE)
 
-plot(fips_i)
+rm(fips_i)
+
+#plot(fips_i)
 
 water <- file.path(data_dir, "Water.tif") |>
   rast() |>
@@ -71,16 +92,14 @@ writeRaster(water, filename = file.path(output_dir, "Water.tif"), overwrite = TR
 
 plot(water)
 
-rm(c(slsra, fips_n, fips_n_slope, fips_i, water))
+rm(water)
+
 ```
 
 ## Convert to one-hot representation
 
 ```{r}
-data_dir <- "data/original/"
-output_dir <- "data/one_hot/"
-
-config <- model::load_config("../model/config.csv")
+config <- model::load_config()
 
 get_feature_mappings <- function(config) {
   # Group by layer, results in {layer_name : layer_config}
@@ -117,6 +136,9 @@ one_hot <- function(raster, feature_mappings) {
 ```
 
 ```{r}
+data_dir <- "data/bush/original/"
+output_dir <- "data/bush/one_hot/"
+
 slsra <- file.path(data_dir, "SLSRA.tif") |>
   rast() |>
   one_hot(feature_mappings) |>
@@ -173,7 +195,7 @@ writeRaster(water, filename = file.path(output_dir, "Water.tif"), overwrite = TR
 
 #plot(water)
 
-x <- rast(file.path(output_dir, "SLSRA.tif"))
+x <- rast(file.path(output_dir, "FIPS_I.tif"))
 x
 
 plot(x)
