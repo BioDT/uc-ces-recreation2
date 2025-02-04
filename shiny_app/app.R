@@ -4,6 +4,7 @@ library(leaflet)
 # setwd(here::here())
 print(getwd())
 devtools::load_all("../model")
+source("about.R")
 
 # UKCEH theming
 devtools::source_url("https://github.com/NERC-CEH/UKCEH_shiny_theming/blob/main/theme_elements.R?raw=TRUE")
@@ -85,21 +86,13 @@ ui <- fluidPage(
         column(
             width = 6,
             fluidRow(
-                column(
-                    width = 3,
-                    actionButton("loadButton", "Load Persona")
-                ),
-                column(
-                    width = 3,
-                    actionButton("saveButton", "Save Persona")
-                ),
-                column(
-                    width = 6,
-                    actionButton("updateButton", "Update Map")
-                )
+                column(width = 3, actionButton("loadButton", "Load Persona")),
+                column(width = 3, actionButton("saveButton", "Save Persona")),
+                column(width = 6, actionButton("updateButton", "Update Map"))
             ),
             verbatimTextOutput("userInfo"),
             tabsetPanel(
+                tabPanel("About", about_html),
                 tabPanel("SLSRA", create_sliders("SLSRA")),
                 tabPanel("FIPS_N", create_sliders("FIPS_N")),
                 tabPanel("FIPS_I", create_sliders("FIPS_I")),
@@ -126,10 +119,6 @@ ui <- fluidPage(
         tags$div(
             style = "background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;",
             "© UK Centre for Ecology & Hydrology, 2025",
-            tags$br(),
-            "Information about how we process your data can be found in our ",
-            tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice", target = "_blank"),
-            ". For further information, please contact Dr Jan Dick, jand@ceh.ac.uk."
         )
     )
 )
@@ -156,7 +145,7 @@ server <- function(input, output, session) {
         )
         return(persona)
     }
-  
+
 
     # Reactive variable to track the csv file that's been selected for loading
     reactiveLoadFile <- reactiveVal("examples.csv")
