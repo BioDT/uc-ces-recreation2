@@ -20,6 +20,11 @@ file_stems <- lapply(
 files <- setNames(file_paths, file_stems)
 stopifnot(all(names(feature_mappings) %in% names(files)))
 
+reference_raster <- rast(
+    crs = "EPSG:27700",
+    res = c(20, 20),
+    ext = ext(-10000, 660000, 460000, 1220000) # xmin, xmax, ymin, ymax
+)
 
 # First need to quantise the slope values before one-hot encoding
 # NOTE: I do not know the origin of these intervals
@@ -53,10 +58,14 @@ for (layer_name in names(feature_mappings)) {
         layer <- rast(infile)
     }
 
-    layer |>
-        round() |>
-        categorical_to_one_hot(feature_mapping) |>
-        writeRaster(outfile)
+    if (layer_name == "Water_Rivers") {
+        layer |>
+            round() |>
+            categorical_to_one_hot(feature_mapping) |>
+            project(reference_raster) |>
+            round() |>
+            writeRaster(outfile)
+    }
 
     end_time <- Sys.time()
     message(paste(layer_name, "took", end_time - start_time, "to complete"))
@@ -64,6 +73,8 @@ for (layer_name in names(feature_mappings)) {
 
 rm(layer)
 gc()
+
+stop()
 
 # ----------------------------------------------
 # Create four stacked rasters for each component
