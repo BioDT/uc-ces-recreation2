@@ -1,3 +1,5 @@
+setwd("model")
+
 testthat::test_dir("tests/testthat")
 
 style <- styler::tidyverse_style(

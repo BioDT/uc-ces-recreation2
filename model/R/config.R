@@ -1,6 +1,6 @@
-# TODO: fix this shit
+# TODO: understand why system.file causes errors during devtools::install
 default_config <- here::here("config.csv")
-# system.file("extdata", "config.csv", package = "model")
+# system.file("extdata", "config.csv", package = "model")  # nolint
 
 #' @export
 load_config <- function(config_path = NULL) {

@@ -1,23 +1,19 @@
 library(testthat)
 
-# TODO: import package instead of directly sourcing
-source("../../R/config.R")
+# NOTE: this seems like a weird standard for testing. Should I library(mypackage)?
+devtools::load_all("../../")
 
 test_that("fail gracefully for misconfigured persona file", {
+    skip("Not yet written")
+
     test_file <- tempfile(fileext = ".csv")
 
     persona_nonames <- sample(0:10, size = 87, replace = TRUE)
 
-    # readr::write_csv(test_file, persons_nonames)
-
-    # TODO:
-    # load_persona(test_file)
     unlink(test_file)
 })
 
 
-
-# Test that a single persona can be saved and re-loaded
 test_that("saving and loading a single persona", {
     test_file <- tempfile(fileext = ".csv")
 
