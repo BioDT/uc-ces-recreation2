@@ -2,6 +2,7 @@
 
 export(compute_component)
 export(compute_potential)
+export(get_feature_mappings)
 export(load_config)
 export(load_persona)
 export(load_raster)

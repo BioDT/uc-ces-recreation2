@@ -23,7 +23,7 @@ Imports:
     readr,
     terra
 Suggests:
-    bslib
+    bslib,
     devtools,
     here,
     knitr,
