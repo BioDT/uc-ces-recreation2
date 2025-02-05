@@ -1,0 +1,118 @@
+---
+title: Inspecting the raw data
+format:
+  html:
+    embed-resources: true
+---
+
+```{r}
+library(terra)
+
+devtools::load_all("../model")
+
+config <- load_config()
+feature_mappings <- get_feature_mappings(config)
+
+bush <- vect("DataLabs/Raw_Shapefile/Bush/Bush.shp")
+```
+
+```{r}
+raw_data_dir <- "DataLabs"
+
+file_paths <- lapply(
+    list.files(path = raw_data_dir, pattern = "\\.tif$", recursive = TRUE),
+    function(file_) file.path(raw_data_dir, file_)
+)
+file_stems <- lapply(
+    file_paths,
+    function(path) tools::file_path_sans_ext(basename(path))
+)
+files <- setNames(file_paths, file_stems)
+
+# There are more files than feature mappigs...
+paste(length(files), length(feature_mappings))
+
+# So check that the feature mappings are a subset
+stopifnot(all(names(feature_mappings) %in% names(files)))
+```
+
+## Properties of the original tiffs
+
+```r
+properties <- lapply(files, function(file_) {
+    raster <- rast(file_)
+    res <- c(
+        #file_size = file.info(file_)$size,
+        nlyr = nlyr(raster),
+        res = res(raster),
+        ext = as.vector(ext(raster)),
+        origin = origin(raster)
+    )
+    return(res)
+})
+
+properties_df <- as.data.frame(
+    do.call(rbind, properties),  # creates matrix
+    stringsAsFactor = FALSE
+)
+properties_df
+
+# Check all values are integers
+for(file_ in files) {
+    
+    # Slope has non-integer values
+    if (file_ == files[["FIPS_N_Slope"]]) next
+
+    raster <- file_ |>
+        rast() |>
+        crop(bush)
+
+    print(cat(basename(file_), unique(values(raster)), "\n", sep = " "))
+}
+```
+
+## Test
+
+```{r}
+file_paths <- lapply(
+    list.files(path = file.path("Legacy", "Maddalena_Raw_Data", "Water"), pattern = "\\.tif$"),
+    function(file_) file.path("Legacy", "Maddalena_Raw_Data", "Water", file_)
+)
+file_stems <- lapply(
+    file_paths,
+    function(path) tools::file_path_sans_ext(basename(path))
+)
+files <- setNames(file_paths, file_stems)
+files
+
+stacked <- rast(lapply(files, rast))
+nlyr(stacked)
+names(stacked)
+```
+
+```{r}
+r <- rast("Processed/FIPS_N/slope/FIPS_N_Slope.tif")
+names(r)
+```
+
+## Properties of the processed tiffs
+
+```{r}
+processed_data_dir <- "Processed"
+
+file_paths <- lapply(
+    list.files(path = processed_data_dir, pattern = "\\.tif$", recursive = TRUE),
+    function(file_) file.path(processed_data_dir, file_)
+)
+file_stems <- lapply(
+    file_paths,
+    function(path) tools::file_path_sans_ext(basename(path))
+)
+files <- setNames(file_paths, file_stems)
+
+files
+```
+
+```{r}
+files[[1]] |> rast() |> crop(bush) |> plot()
+```

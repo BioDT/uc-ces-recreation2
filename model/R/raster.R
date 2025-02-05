@@ -59,6 +59,23 @@ load_raster <- function(raster_path, area = NULL) {
     return(raster)
 }
 
+#' @export
+categorical_to_one_hot <- function(layer, feature_mapping) {
+    stopifnot(terra::nlyr(layer) == 1)
+    sublayer_stack <- lapply(
+        # NOTE: These names are integer values (Raster_Val column in config.csv)
+        names(feature_mapping),
+        function(i) {
+            sublayer_i <- terra::ifel(layer == as.numeric(i), 1, 0)
+            # NOTE: feature_mapping[i] may be "feature_j" where j =\= i !
+            # E.g. FIPS_N_Landform_2 has a 'Raster_Val' of 3, unfortunately
+            names(sublayer_i) <- feature_mapping[i]
+            return(sublayer_i)
+        }
+    )
+    return(terra::rast(sublayer_stack))
+}
+
 #' Convert raster to int
 #'
 #' @export
