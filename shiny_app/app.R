@@ -2,9 +2,8 @@ library(shiny)
 library(leaflet)
 library(leaflet.extras)
 
-# setwd(here::here())
-print(getwd())
-devtools::load_all("../model")
+#devtools::load_all("../model")
+devtools::install_github("BioDT/uc-ces-recreation2", subdir = "model", ref = "develop")
 
 source("about.R")  # contains about_html
 source("theme.R")  # contains custom_theme, custom_titlePanel
