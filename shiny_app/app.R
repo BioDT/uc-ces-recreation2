@@ -21,6 +21,9 @@ source("theme.R")  # contains custom_theme, custom_titlePanel
 .config <- load_config()
 .layer_info <- setNames(.config[["Description"]], .config[["Name"]])
 .layer_names <- names(.layer_info)
+.max_area <- 1e9  # about 1/4 of the Cairngorms area
+.min_area <- 1e4
+.data_extent <- terra::ext(-10000, 660000, 460000, 1220000)  # Scotland bbox
 
 list_persona_files <- function() {
     return(list.files(path = .persona_dir, pattern = "\\.csv$", full.names = FALSE))
@@ -70,6 +73,51 @@ palette <- colorNumeric(
     domain = c(0, 1),
     na.color = "transparent"
 )
+
+check_valid_bbox <- function(bbox) {
+    if (is.null(bbox)) {
+        message("No area has been selected. Please select an area.")
+        return(FALSE)
+    }
+    area <- (terra::xmax(bbox) - terra::xmin(bbox)) * (terra::ymax(bbox) - terra::ymin(bbox))
+    if (area > .max_area) {
+        message(paste(
+            "The area you have selected is too large to be computed at this time",
+            "(", sprintf("%.1e", area), ">", .max_area, " m^2 ).",
+            "Please draw a smaller area."
+        ))
+        return(FALSE)
+    }
+    if (area < .min_area) {
+        message(paste(
+            "The area you have selected is too small",
+            "(", round(area), "<", .min_area, " m^2 ).",
+            "Please draw a larger area."
+        ))
+        return(FALSE)
+    }
+
+    within_data_bounds <- (
+        terra::xmin(bbox) >= terra::xmin(.data_extent) &&
+        terra::xmax(bbox) <= terra::xmax(.data_extent) &&
+        terra::ymin(bbox) >= terra::ymin(.data_extent) &&
+        terra::ymax(bbox) <= terra::ymax(.data_extent)
+    )
+    if (!within_data_bounds) {
+        message("The area you have selected exceeds the boundaries where we have data (i.e. Scotland)")
+        return(FALSE)
+    }
+    return(TRUE)
+}
+
+check_valid_persona <- function(persona) {
+    if (all(sapply(persona, function(score) score == 0))) {   
+        message("All the persona scores are zero. At least one score must be non-zero.")
+        message("Perhaps you have forgotten to load a persona?")
+        return(FALSE)
+    }
+    return(TRUE)
+}
 
 ui <- fluidPage(
     theme = custom_theme,
@@ -344,7 +392,7 @@ server <- function(input, output, session) {
         leafletProxy("map") |>
             fitBounds(lng1 = xmin, lat1 = ymin, lng2 = xmax, lat2 = ymax)
 
-        # These coords are in EPSSG:4326, but our rasters are EPSG:27700
+        # These coords are in EPSG:4326, but our rasters are EPSG:27700
         extent_4326 <- terra::ext(xmin, xmax, ymin, ymax)
         extent_27700 <- terra::project(extent_4326, from = "EPSG:4326", to = "EPSG:27700")
 
@@ -355,19 +403,42 @@ server <- function(input, output, session) {
     # Recompute raster when update button is clicked
     observeEvent(input$updateButton, {
         persona <- get_persona_from_sliders()
+        
+        msg <- capture.output(
+            valid_persona <- check_valid_persona(persona),
+            type = "message"
+        )
+        output$userInfo <- renderPrint({
+            cat(msg, sep = "\n")
+        })
+        if (!valid_persona) return()
 
-        output$userInfo <- renderText({"Computing Recreational Potential..."}) # nolint
+        bbox <- reactiveExtent()
+
+        msg <- capture.output(
+            valid_bbox <- check_valid_bbox(bbox),
+            type = "message"
+        )
+        output$userInfo <- renderPrint({
+            cat(msg, sep = "\n")
+        })
+        if (!valid_bbox) return()
+
+
+        #output$userInfo <- renderText({"Computing Recreational Potential..."}) # nolint
 
         msg <- capture.output(
             layers <- model::compute_potential(
                 persona,
                 raster_dir = .raster_dir,
-                bbox = reactiveExtent()
+                bbox = bbox
             ),
             type = "message"
         )
 
-        output$userInfo <- renderPrint({cat(msg, sep = "\n")}) # nolint
+        output$userInfo <- renderPrint({
+            cat(msg, sep = "\n")
+        })
 
         # Update reactiveLayers with new raster
         reactiveLayers(layers)
