@@ -19,6 +19,20 @@ load_config <- function(config_path = NULL) {
     return(loaded_config)
 }
 
+#' @export
+get_feature_mappings <- function(config) {
+    # Group by layer, results in {layer_name : layer_config}
+    config_by_layer <- split(config, as.factor(config[["Dataset"]]))
+
+    # Generate mapping {layer_name : {raster_value : feature_name}}
+    mappings <- lapply(
+        config_by_layer, function(layer_config) {
+            setNames(layer_config[["Name"]], layer_config[["Raster_Val"]])
+        }
+    )
+    return(mappings)
+}
+
 .read_persona_csv <- function(csv_path) {
     # Read csv as a dataframe of integers, throwing an error for non-integer elements
     df <- readr::read_csv(
