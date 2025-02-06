@@ -234,12 +234,14 @@ server <- function(input, output, session) {
                 selectInput(
                     "loadUserSelect",
                     "Select user",
-                    choices = list_users()
+                    choices = list_users(),
+                    selected = "examples"
                 ),
                 selectInput(
                     "loadPersonaSelect",
                     "Select persona",
-                    choices = NULL
+                    choices = NULL,
+                    selected = NULL
                 ),
                 footer = tagList(
                     modalButton("Cancel"),
