@@ -125,11 +125,17 @@ ui <- fluidPage(
                         min = 0,
                         max = 1,
                         value = 0.8,
-                        step = 0.1
+                        step = 0.2,
+                        ticks = FALSE
                     )
                 )
             ),
             verbatimTextOutput("userInfo"),
+            tags$head(
+                tags$style(HTML("
+                    .leaflet-draw-toolbar a {background-color: red !important;}
+                "))
+            ),
             leafletOutput("map")
         ),
         tags$div(
@@ -280,7 +286,12 @@ server <- function(input, output, session) {
         leaflet() |>
             setView(lng = -4.2026, lat = 56.4907, zoom = 7) |>
             addTiles() |>
-            addLegend(pal = palette, values = c(0, 1), title = "Values") |>
+            addLegend(
+                title = "Values",
+                position = "topright",
+                values = c(0, 1),
+                pal = palette
+            ) |>
             addFullscreenControl() |>
             addDrawToolbar(
                 targetGroup = "drawnItems",
@@ -369,7 +380,7 @@ server <- function(input, output, session) {
     observeEvent(input$layerSelect, {
         update_map()
     })
-    
+
     # Update map using cached values when opacity changes
     observeEvent(input$opacity, {
         update_map()
