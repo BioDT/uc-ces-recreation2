@@ -15,7 +15,7 @@ source("theme.R")  # contains custom_theme, custom_titlePanel
     password = Sys.getenv("APP_PASSWORD")
 )
 
-.raster_dir <- "data/bush/one_hot/"
+.raster_dir <- "data"
 .persona_dir <- "personas"
 .example_persona_csv <- file.path(.persona_dir, "examples.csv")
 .config <- load_config()
@@ -26,9 +26,18 @@ list_persona_files <- function() {
     return(list.files(path = .persona_dir, pattern = "\\.csv$", full.names = FALSE))
 }
 
+list_users <- function() lapply(list_persona_files(), tools::file_path_sans_ext)
+
 list_personas_in_file <- function(file_name) {
     personas <- names(read.csv(file.path(.persona_dir, file_name), nrows = 1))
     return(personas[personas != "index"])
+}
+
+remove_non_alphanumeric <- function(string) {
+    string <- gsub(" ", "_", string)  # Spaces to underscore
+    string <- gsub("[^a-zA-Z0-9_]+", "", string)  # remove non alpha-numeric
+    string <- gsub("^_+|_+$", "", string)  # remove leading or trailing underscores
+    return(string)
 }
 
 create_sliders <- function(component) {
@@ -121,10 +130,10 @@ ui <- fluidPage(
                 )
             ),
             verbatimTextOutput("userInfo"),
-            leafletOutput("map"),
+            leafletOutput("map")
         ),
         tags$div(
-            style = "text-align: center; background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;",
+            style = "text-align: center; background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;", #nolint
             "© UK Centre for Ecology & Hydrology, 2025",
         )
     )
@@ -153,7 +162,7 @@ server <- function(input, output, session) {
     }
 
     # Reactive variable to track the csv file that's been selected for loading
-    reactiveLoadFile <- reactiveVal("examples.csv")
+    reactiveLoadFile <- reactiveVal()
 
     # Reactive variable for caching computed raster
     reactiveLayers <- reactiveVal()
@@ -169,9 +178,9 @@ server <- function(input, output, session) {
             modalDialog(
                 title = "Load Persona",
                 selectInput(
-                    "loadFileSelect",
-                    "Select existing file",
-                    choices = list_persona_files()
+                    "loadUserSelect",
+                    "Select user",
+                    choices = list_users()
                 ),
                 selectInput(
                     "loadPersonaSelect",
@@ -185,9 +194,9 @@ server <- function(input, output, session) {
             )
         )
     })
-    observeEvent(input$loadFileSelect, {
-        req(input$loadFileSelect)
-        reactiveLoadFile(input$loadFileSelect)
+    observeEvent(input$loadUserSelect, {
+        req(input$loadUserSelect)
+        reactiveLoadFile(paste0(input$loadUserSelect, ".csv"))
     })
     observeEvent(reactiveLoadFile(), {
         updateSelectInput(
@@ -223,11 +232,11 @@ server <- function(input, output, session) {
             modalDialog(
                 title = "Save Persona",
                 selectInput(
-                    "saveFileSelect",
-                    "Select existing file",
-                    choices = c("", list_persona_files())
+                    "saveUserSelect",
+                    "Select existing user",
+                    choices = c("", list_users())
                 ),
-                textInput("saveFileName", "Or enter a new file name"),
+                textInput("saveUserName", "Or enter a new user name"),
                 textInput(
                     "savePersonaName",
                     "Enter a name for the persona",
@@ -241,13 +250,17 @@ server <- function(input, output, session) {
         )
     })
     observeEvent(input$confirmSave, {
-        file_name <- if (input$saveFileName != "") input$saveFileName else input$saveFileSelect
+        user_name <- if (input$saveUserName != "") input$saveUserName else input$saveUserSelect
         persona_name <- input$savePersonaName
+
+        # Remove characters that may cause problems with i/o and dataframe filtering
+        user_name <- remove_non_alphanumeric(user_name)
+        persona_name <- remove_non_alphanumeric(persona_name)
 
         msg <- capture.output(
             model::save_persona(
                 persona = get_persona_from_sliders(),
-                csv_path = file.path(.persona_dir, file_name),
+                csv_path = file.path(.persona_dir, paste0(user_name, ".csv")),
                 name = persona_name
             ),
             type = "message"
@@ -332,6 +345,8 @@ server <- function(input, output, session) {
     observeEvent(input$updateButton, {
         persona <- get_persona_from_sliders()
 
+        output$userInfo <- renderText({"Computing Recreational Potential..."}) # nolint
+
         msg <- capture.output(
             layers <- model::compute_potential(
                 persona,
@@ -341,15 +356,12 @@ server <- function(input, output, session) {
             type = "message"
         )
 
-        output$userInfo <- renderPrint({
-            cat(msg, sep = "\n")
-        })
+        output$userInfo <- renderPrint({cat(msg, sep = "\n")}) # nolint
 
         # Update reactiveLayers with new raster
         reactiveLayers(layers)
 
         update_map()
-        
 
     })
 

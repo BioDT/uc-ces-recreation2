@@ -83,11 +83,13 @@ get_feature_mappings <- function(config) {
 #'
 #' @export
 load_persona <- function(csv_path, name = NULL) {
+    message(paste0("Loading persona '", name, "' from file '", csv_path, "'"))
+
     df <- .read_persona_csv(csv_path)
 
     if (is.null(name)) {
         if (ncol(df) > 1) {
-            stop("Error: `name` is required when the persona file contains >1 persona")
+            stop("Error: A name is required when the persona file contains >1 persona")
         }
         # There is only one persona in the file
         persona_df <- df
@@ -122,6 +124,7 @@ save_persona <- function(persona, csv_path, name) {
         message("Cannot name the persona 'index'. Persona not saved")
         return()
     }
+    message(paste0("Saving persona to file '", csv_path, "' with name '", name, "'"))
     .assert_valid_persona(persona)
 
     # Create a dataframe with 'index' and 'name'
@@ -129,7 +132,7 @@ save_persona <- function(persona, csv_path, name) {
     df[[name]] <- persona
 
     if (file.exists(csv_path)) {
-        message(paste0("File ", csv_path, " already exists. The persona will be appended."))
+        message(paste0("File '", csv_path, "' already exists. The persona will be appended."))
 
         # We need to merge the two dataframes carefully, using the named rows
 
@@ -147,7 +150,7 @@ save_persona <- function(persona, csv_path, name) {
         # Check if we are overwriting an existing persona and delete the column if so
         # since otherwise we end up with `name1` and `name2` or something like that
         if (name %in% colnames(df_a)) {
-            message(paste0("A persona with name ", name, " already exists, and will be overwritten")) # nolint
+            message(paste0("A persona with name '", name, "' already exists, and will be overwritten")) # nolint
             df_a[[name]] <- NULL
         }
 
@@ -160,6 +163,5 @@ save_persona <- function(persona, csv_path, name) {
         df <- df[, c("index", setdiff(colnames(df), "index"))]
     }
 
-    message(paste0("Writing persona to file ", csv_path))
     readr::write_csv(df, csv_path)
 }
