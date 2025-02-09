@@ -112,7 +112,7 @@ check_valid_bbox <- function(bbox) {
 }
 
 check_valid_persona <- function(persona) {
-    if (all(sapply(persona, function(score) score == 0))) {   
+    if (all(sapply(persona, function(score) score == 0))) {
         message("All the persona scores are zero. At least one score must be non-zero.")
         message("Perhaps you have forgotten to load a persona?")
         return(FALSE)
@@ -177,6 +177,15 @@ ui <- fluidPage(
                         max = 1,
                         value = 0.8,
                         step = 0.2,
+                        ticks = FALSE
+                    ),
+                    sliderInput(
+                        "minDisplay",
+                        "Minimum Value to Display",
+                        min = 0,
+                        max = 0.9,
+                        value = 0,
+                        step = 0.1,
                         ticks = FALSE
                     )
                 )
@@ -392,6 +401,10 @@ server <- function(input, output, session) {
 
         layers <- reactiveLayers()
         curr_layer <- layers[[as.numeric(input$layerSelect)]]
+
+        if (input$minDisplay > 0) {
+            curr_layer <- terra::ifel(curr_layer > input$minDisplay, curr_layer, NA)
+        }
 
         leafletProxy("map") |>
             clearImages() |>
