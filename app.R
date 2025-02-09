@@ -2,11 +2,13 @@ library(shiny)
 library(leaflet)
 library(leaflet.extras)
 
-#devtools::load_all("../model")
-devtools::install_github("BioDT/uc-ces-recreation2", subdir = "model", ref = "develop")
+devtools::load_all("model")
 
-source("about.R")  # contains about_html
-source("theme.R")  # contains custom_theme, custom_titlePanel
+# NOTE: this did not immediately work..
+#devtools::install_github("BioDT/uc-ces-recreation2", subdir = "model", ref = "develop")
+
+source("shiny_app/about.R")  # contains about_html
+source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 
 
 .credentials <- data.frame(
@@ -14,8 +16,8 @@ source("theme.R")  # contains custom_theme, custom_titlePanel
     password = Sys.getenv("APP_PASSWORD")
 )
 
-.raster_dir <- "data"
-.persona_dir <- "personas"
+.raster_dir <- "shiny_app/data"
+.persona_dir <- "shiny_app/personas"
 .example_persona_csv <- file.path(.persona_dir, "examples.csv")
 .config <- load_config()
 .layer_info <- setNames(.config[["Description"]], .config[["Name"]])
@@ -274,8 +276,8 @@ server <- function(input, output, session) {
             )
         })
 
-        output$userInfo <- renderPrint({
-            paste("Loaded persona", input$loadPersonaSelect, "from file", reactiveLoadFile())
+        output$userInfo <- renderText({
+            paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'")
         })
 
         removeModal()
@@ -312,18 +314,15 @@ server <- function(input, output, session) {
         user_name <- remove_non_alphanumeric(user_name)
         persona_name <- remove_non_alphanumeric(persona_name)
 
-        msg <- capture.output(
-            model::save_persona(
-                persona = get_persona_from_sliders(),
-                csv_path = file.path(.persona_dir, paste0(user_name, ".csv")),
-                name = persona_name
-            ),
-            type = "message"
-        )
-
-        output$userInfo <- renderPrint({
-            cat(msg, sep = "\n")
+        output$userInfo <- renderText({
+            paste0("Saving persona '", persona_name, "' under user '", user_name, "'")
         })
+
+        model::save_persona(
+            persona = get_persona_from_sliders(),
+            csv_path = file.path(.persona_dir, paste0(user_name, ".csv")),
+            name = persona_name
+        )
 
         removeModal()
     })
@@ -404,7 +403,7 @@ server <- function(input, output, session) {
     # Recompute raster when update button is clicked
     observeEvent(input$updateButton, {
         persona <- get_persona_from_sliders()
-        
+
         msg <- capture.output(
             valid_persona <- check_valid_persona(persona),
             type = "message"
@@ -424,9 +423,6 @@ server <- function(input, output, session) {
             cat(msg, sep = "\n")
         })
         if (!valid_bbox) return()
-
-
-        #output$userInfo <- renderText({"Computing Recreational Potential..."}) # nolint
 
         msg <- capture.output(
             layers <- model::compute_potential(
