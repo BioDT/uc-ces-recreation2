@@ -366,12 +366,18 @@ server <- function(input, output, session) {
         output$userInfo <- renderText({
             paste0("Saving persona '", persona_name, "' under user '", user_name, "'")
         })
-
-        model::save_persona(
-            persona = get_persona_from_sliders(),
-            csv_path = file.path(.persona_dir, paste0(user_name, ".csv")),
-            name = persona_name
+        
+        msg <- capture.output(
+            model::save_persona(
+                persona = get_persona_from_sliders(),
+                csv_path = file.path(.persona_dir, paste0(user_name, ".csv")),
+                name = persona_name
+            ),
+            type = "message"
         )
+        output$userInfo <- renderPrint({
+            cat(msg, sep = "\n")
+        })
 
         removeModal()
     })
