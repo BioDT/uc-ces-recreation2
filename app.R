@@ -152,6 +152,7 @@ ui <- fluidPage(
                     actionButton("loadButton", "Load Persona"),
                     actionButton("saveButton", "Save Persona"),
                     actionButton("updateButton", "Update Map"),
+                    #downloadButton("downloadMap", "Download Map"),
                     radioButtons(
                         "layerSelect",
                         "",
@@ -453,6 +454,23 @@ server <- function(input, output, session) {
     observeEvent(input$opacity, {
         update_map()
     })
+
+    # NOTE: this did not work. Using leafletProxy is the issue.
+    # Need to create a fresh map object.
+    # See https://forum.posit.co/t/solved-error-when-using-mapshot-with-shiny-leaflet/6765/7
+    #
+    #output$downloadMap <- downloadHandler(
+    #    filename = function() {
+    #        paste("map_", Sys.Date(), ".png", sep = "")
+    #    },
+    #    content = function(file) {
+    #        mapview::mapshot2(
+    #            leafletProxy("map"),
+    #            file = file,
+    #            cliprect = "viewport"
+    #        )
+    #    }
+    #)
 }
 
 shinyApp(ui = ui, server = server)
