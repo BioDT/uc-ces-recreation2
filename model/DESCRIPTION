@@ -37,6 +37,7 @@ Suggests:
     styler,
     testthat,
     usethis,
+    waiter,
     webshot2
 Remotes: BioDT/uc-ces-recreation2@develop
 Encoding: UTF-8

@@ -122,6 +122,7 @@ check_valid_persona <- function(persona) {
 
 ui <- fluidPage(
     theme = custom_theme,
+    waiter::use_waiter(),
     tags$head(
         tags$style(HTML("
             html, body {height: 100%;}
@@ -398,6 +399,15 @@ server <- function(input, output, session) {
     # Grabs cached layers and updates map with current layer selection
     update_map <- function() {
         req(reactiveLayers())
+        
+        waiter::waiter_show(
+            html = div(
+                style = "color: #F0F0F0;",
+                tags$h3("Updating Map..."),
+                waiter::spin_fading_circles()
+            ),
+            color = "rgba(50, 50, 50, 0.6)"
+        )
 
         layers <- reactiveLayers()
         curr_layer <- layers[[as.numeric(input$layerSelect)]]
@@ -409,6 +419,8 @@ server <- function(input, output, session) {
         leafletProxy("map") |>
             clearImages() |>
             addRasterImage(curr_layer, colors = palette, opacity = input$opacity)
+
+        waiter::waiter_hide()
     }
 
     # Draw rectangle
@@ -464,6 +476,15 @@ server <- function(input, output, session) {
         })
         if (!valid_bbox) return()
 
+        waiter::waiter_show(
+            html = div(
+                style = "color: #F0F0F0;",
+                tags$h3("Computing Recreational Potential..."),
+                waiter::spin_fading_circles()
+            ),
+            color = "rgba(50, 50, 50, 0.6)"
+        )
+
         msg <- capture.output(
             layers <- model::compute_potential(
                 persona,
@@ -480,6 +501,8 @@ server <- function(input, output, session) {
         # Update reactiveLayers with new raster
         reactiveLayers(layers)
 
+        waiter::waiter_hide()
+
         update_map()
 
     })
@@ -491,6 +514,11 @@ server <- function(input, output, session) {
 
     # Update map using cached values when opacity changes
     observeEvent(input$opacity, {
+        update_map()
+    })
+    
+    # Update map using cached values when lower threshold changes
+    observeEvent(input$minDisplay, {
         update_map()
     })
 
