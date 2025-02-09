@@ -26,6 +26,19 @@ source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 .min_area <- 1e4
 .data_extent <- terra::ext(-10000, 660000, 460000, 1220000)  # Scotland bbox
 
+.group_names <- c(
+    SLSRA_LCM = "Land Cover",
+    SLSRA_Designations = "Official Designations",
+    FIPS_N_Landform = "Land Formations",
+    FIPS_N_Slope = "Slopes",
+    FIPS_N_Soil = "Soil Type",
+    FIPS_I_RoadsTracks = "Roads and Tracks",
+    FIPS_I_NationalCycleNetwork = "National Cycle Network",
+    FIPS_I_LocalPathNetwork = "Local Path Network",
+    Water_Lakes = "Lakes",
+    Water_Rivers = "Rivers"
+)
+
 list_persona_files <- function() {
     return(list.files(path = .persona_dir, pattern = "\\.csv$", full.names = FALSE))
 }
@@ -46,6 +59,8 @@ remove_non_alphanumeric <- function(string) {
 
 create_sliders <- function(component) {
     layer_names_this_component <- .layer_names[startsWith(.layer_names, component)]
+    groups_this_component <- .group_names[startsWith(names(.group_names), component)]
+
     sliders <- lapply(layer_names_this_component, function(layer_name) {
         sliderInput(
             layer_name,
@@ -58,15 +73,33 @@ create_sliders <- function(component) {
         )
     })
 
-    # Divide sliders into two rows
-    n <- length(sliders)
-    sliders_left <- sliders[seq(1, n, by = 2)]
-    sliders_right <- sliders[seq(2, n, by = 2)]
+    lapply(names(groups_this_component), function(group) {
+        # NOTE: very hacky method to group all designations, which actually stem
+        # from different layers. It may actually be preferable to hard-code the groups
+        # into a new column of config.csv
+        if (group == "SLSRA_Designations") {
+            sliders_this_group <- sliders[!startsWith(layer_names_this_component, "SLSRA_LCM")]
+        } else {
+            sliders_this_group <- sliders[startsWith(layer_names_this_component, group)]
+        }
 
-    fluidRow(
-        column(width = 6, sliders_left),
-        column(width = 6, sliders_right)
-    )
+        n <- length(sliders_this_group)
+        sliders_left <- sliders_this_group[seq(1, n, by = 2)]
+        sliders_right <- if (n > 1) {
+            sliders_this_group[seq(2, n, by = 2)]
+        } else {
+            list()
+        }
+
+        div(
+            style = "border: 1px solid #ddd; padding: 10px; border-radius: 5px; margin-top: 5px; margin-bottom: 5px;",
+            h4(.group_names[group]),
+            fluidRow(
+                column(width = 6, sliders_left),
+                column(width = 6, sliders_right)
+            )
+        )
+    })
 }
 
 palette <- colorNumeric(
