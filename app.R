@@ -151,6 +151,7 @@ ui <- fluidPage(
                     width = 8,
                     actionButton("loadButton", "Load Persona"),
                     actionButton("saveButton", "Save Persona"),
+                    actionButton("downloadButton", "Download Persona"),
                     actionButton("updateButton", "Update Map"),
                     #downloadButton("downloadMap", "Download Map"),
                     radioButtons(
@@ -328,6 +329,31 @@ server <- function(input, output, session) {
         removeModal()
     })
 
+    # --------------------------------------------------------------- Download
+    observeEvent(input$downloadButton, {
+        showModal(
+            modalDialog(
+                title = "Download Persona(s)",
+                selectInput(
+                    "downloadUserSelect",
+                    "Select user",
+                    choices = c("", list_users()),
+                    selected = "examples"
+                ),
+                downloadButton("confirmDownload", "Download"),
+                footer = modalButton("Cancel")
+            )
+        )
+    })
+
+    output$confirmDownload <- downloadHandler(
+        filename = function() paste0(input$downloadUserSelect, ".csv"),
+        content = function(file) {
+            src <- file.path(.persona_dir, paste0(input$downloadUserSelect, ".csv"))
+            file.copy(src, file)
+            removeModal()
+        }
+    )
 
     # --------------------------------------------------------------- Map
     # Initialize Leaflet map
