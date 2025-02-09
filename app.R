@@ -154,6 +154,7 @@ ui <- fluidPage(
                     actionButton("saveButton", "Save Persona"),
                     actionButton("downloadButton", "Download Persona"),
                     actionButton("updateButton", "Update Map"),
+                    actionButton("toggleMap", "Toggle Map Type"),
                     #downloadButton("downloadMap", "Download Map"),
                     radioButtons(
                         "layerSelect",
@@ -236,6 +237,9 @@ server <- function(input, output, session) {
 
     # Reactive variable for coordinates of user-drawn bbox
     reactiveExtent <- reactiveVal()
+
+    # Reactive variable for toggling greyscale map
+    mapState <- reactiveVal(FALSE)
 
     # ------------------------------------------------------ Loading
 
@@ -370,7 +374,7 @@ server <- function(input, output, session) {
     output$map <- renderLeaflet({
         leaflet() |>
             setView(lng = -4.2026, lat = 56.4907, zoom = 7) |>
-            addTiles() |>
+            addTiles(group = "background") |>
             addLegend(
                 title = "Values",
                 position = "topright",
@@ -395,6 +399,7 @@ server <- function(input, output, session) {
                 circleMarkerOptions = FALSE
             )
     })
+
 
     # Grabs cached layers and updates map with current layer selection
     update_map <- function() {
@@ -422,6 +427,28 @@ server <- function(input, output, session) {
 
         waiter::waiter_hide()
     }
+
+    # Toggle the tile provider when the button is pressed
+    observeEvent(input$toggleMap, {
+        # Toggle the state
+        newState <- !mapState()
+        mapState(newState)
+
+        leafletProxy("map") |> clearGroup("background")
+
+        # Depending on the state, add the appropriate tile layer.
+        if(newState) {
+            # Add greyscale layer
+            leafletProxy("map") |>
+                addProviderTiles("Esri.WorldTopoMap", group = "background")
+        } else {
+            # Re-add full-colour (OSM) tiles
+            leafletProxy("map") |>
+                addTiles(group = "background")
+        }
+
+        update_map()
+    })
 
     # Draw rectangle
     # NOTE: input$map_draw_new_feature automatically created by leaflet.extras
