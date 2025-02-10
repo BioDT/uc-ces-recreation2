@@ -33,7 +33,18 @@ get_feature_mappings <- function(config) {
     return(mappings)
 }
 
-.read_persona_csv <- function(csv_path) {
+.assert_valid_persona <- function(persona) {
+    expected_names <- load_config()[["Name"]]
+    if (!identical(sort(names(persona)), sort(expected_names))) {
+        stop("Error: malformed names in the persona vector")
+    }
+    if (!all(persona == floor(persona))) {
+        stop("Error: persona contains non-integer values")
+    }
+}
+
+#' @export
+read_persona_csv <- function(csv_path) {
     # Read csv as a dataframe of integers, throwing an error for non-integer elements
     df <- readr::read_csv(
         csv_path,
@@ -60,16 +71,6 @@ get_feature_mappings <- function(config) {
     return(df)
 }
 
-.assert_valid_persona <- function(persona) {
-    expected_names <- load_config()[["Name"]]
-    if (!identical(sort(names(persona)), sort(expected_names))) {
-        stop("Error: malformed names in the persona vector")
-    }
-    if (!all(persona == floor(persona))) {
-        stop("Error: persona contains non-integer values")
-    }
-}
-
 #' Load Persona
 #'
 #' Loads a single persona from a csv file containing one or more personas.
@@ -85,7 +86,7 @@ get_feature_mappings <- function(config) {
 load_persona <- function(csv_path, name = NULL) {
     message(paste0("Loading persona '", name, "' from file '", csv_path, "'"))
 
-    df <- .read_persona_csv(csv_path)
+    df <- read_persona_csv(csv_path)
 
     if (is.null(name)) {
         if (ncol(df) > 1) {
@@ -137,7 +138,7 @@ save_persona <- function(persona, csv_path, name, overwrite = FALSE) {
         # We need to merge the two dataframes carefully, using the named rows
 
         # This currently has 'rownames' but no 'index' column
-        df_a <- .read_persona_csv(csv_path)
+        df_a <- read_persona_csv(csv_path)
 
         # We need to set rownames to align the two during the merge
         df_b <- df

@@ -26,7 +26,7 @@ source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 .min_area <- 1e4
 .data_extent <- terra::ext(-10000, 660000, 460000, 1220000)  # Scotland bbox
 
-.group_names <- c(
+.group_names <- list(
     SLSRA_LCM = "Land Cover",
     SLSRA_Designations = "Official Designations",
     FIPS_N_Landform = "Land Formations",
@@ -37,6 +37,13 @@ source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
     FIPS_I_LocalPathNetwork = "Local Path Network",
     Water_Lakes = "Lakes",
     Water_Rivers = "Rivers"
+)
+
+.base_layers <- list(
+    "Street" = "Esri.WorldStreetMap",
+    "Topographical" = "Esri.WorldTopoMap",
+    "Satellite" = "Esri.WorldImagery",
+    "Greyscale" = "Esri.WorldGrayCanvas"
 )
 
 list_persona_files <- function() {
@@ -159,42 +166,83 @@ check_valid_persona <- function(persona) {
 ui <- fluidPage(
     theme = custom_theme,
     waiter::use_waiter(),
-    tags$head(
-        tags$style(HTML("
-            html, body {height: 100%;}
-            #map {height: 80vh !important;}
-        "))
-    ),
     # Add title, contact address and privacy notice in combined title panel + header
     fluidRow(
-        style = "background-color: #f8f9fa;",
         custom_titlePanel("Recreational Potential Model for Scotland")
     ),
-    fluidRow(
-        column(
+    sidebarLayout(
+        sidebarPanel(
             width = 5,
             tabsetPanel(
                 tabPanel("About", about_html),
-                tabPanel("SLSRA", create_sliders("SLSRA")),
-                tabPanel("FIPS_N", create_sliders("FIPS_N")),
-                tabPanel("FIPS_I", create_sliders("FIPS_I")),
-                tabPanel("Water", create_sliders("Water"))
-            )
-        ),
-        column(
-            width = 7,
-            fluidRow(
-                column(
-                    width = 8,
-                    actionButton("loadButton", "Load Persona"),
-                    actionButton("saveButton", "Save Persona"),
-                    actionButton("downloadButton", "Download Persona"),
-                    actionButton("updateButton", "Update Map"),
-                    actionButton("toggleMap", "Toggle Map Type"),
-                    #downloadButton("downloadMap", "Download Map"),
+                tabPanel(
+                    "Load Persona",
+                    tags$p(),
+                    tags$h3("Load Persona"),
+                    selectInput(
+                        "loadUserSelect",
+                        "Select user",
+                        choices = list_users(),
+                        selected = "examples"
+                    ),
+                    selectInput(
+                        "loadPersonaSelect",
+                        "Select persona",
+                        choices = NULL,
+                        selected = NULL
+                    ),
+                    actionButton("confirmLoad", "Load"),
+                    hr(),
+                    fileInput(
+                        "fileUpload",
+                        "Upload a persona file",
+                        accept = c(".csv")
+                    )
+                ),
+                tabPanel(
+                    "Edit Persona",
+                    tags$p(),
+                    tags$h3("Edit Persona"),
+                    tabsetPanel(
+                        tabPanel("SLSRA", create_sliders("SLSRA")),
+                        tabPanel("FIPS_N", create_sliders("FIPS_N")),
+                        tabPanel("FIPS_I", create_sliders("FIPS_I")),
+                        tabPanel("Water", create_sliders("Water"))
+                    )
+                ),
+                tabPanel(
+                    "Save Persona",
+                    tags$p(),
+                    tags$h3("Save Persona"),
+                    selectInput(
+                        "saveUserSelect",
+                        "Select existing user",
+                        choices = c("", list_users()),
+                        selected = ""
+                    ),
+                    textInput("saveUserName", "Or enter a new user name"),
+                    textInput(
+                        "savePersonaName",
+                        "Enter a name for the persona",
+                        value = NULL
+                    ),
+                    actionButton("confirmSave", "Save"),
+                    hr(),
+                    selectInput(
+                        "downloadUserSelect",
+                        "Download persona File",
+                        choices = c("", list_users()),
+                        selected = ""
+                    ),
+                    downloadButton("confirmDownload", "Download")
+                    ),
+                tabPanel(
+                    "Map Controls",
+                    tags$p(),
+                    tags$h3("Data Layers"),
                     radioButtons(
                         "layerSelect",
-                        "",
+                        "Select which component to display on the map",
                         choices = list(
                             "SLSRA" = 1,
                             "FIPS_N" = 2,
@@ -204,41 +252,75 @@ ui <- fluidPage(
                         ),
                         selected = 5,
                         inline = TRUE
-                    )
-                ),
-                column(
-                    width = 4,
+                    ),
+                    tags$p(),
+                    sliderInput(
+                        "minDisplay",
+                        "Display values above (values below this will be transparent)",
+                        width = 300,
+                        min = 0,
+                        max = 0.9,
+                        value = 0,
+                        step = 0.1,
+                        ticks = FALSE
+                    ),
                     sliderInput(
                         "opacity",
-                        "Layer Opacity",
+                        "Opacity",
+                        width = 300,
                         min = 0,
                         max = 1,
                         value = 0.8,
                         step = 0.2,
                         ticks = FALSE
                     ),
-                    sliderInput(
-                        "minDisplay",
-                        "Minimum Value to Display",
-                        min = 0,
-                        max = 0.9,
-                        value = 0,
-                        step = 0.1,
-                        ticks = FALSE
+                    tags$hr(),
+                    tags$h3("Base Map"),
+                    radioButtons(
+                        "baseLayerSelect",
+                        "Select a base map",
+                        choices = .base_layers,
+                        selected = .base_layers[[1]],
+                        inline = TRUE
                     )
+                ),
+                tabPanel(
+                    "FAQ"
                 )
-            ),
-            verbatimTextOutput("userInfo"),
+            )
+        ),
+        mainPanel(
+            width = 7,
+            #actionButton("toggleMap", "Toggle Map Type"),
             tags$head(
                 tags$style(HTML("
+                    html, body {height: 100%;}
+                    #map {height: 80vh !important;}
                     .leaflet-draw-toolbar a {background-color: red !important;}
+                     #update-button {background-color: red;}
                 "))
             ),
-            leafletOutput("map")
-        ),
+            tags$div(
+                class = "map-container", style = "position: relative;",
+                leafletOutput("map"),
+                absolutePanel(
+                    id = "update-button",
+                    class = "fab",
+                    #fixed = TRUE,
+                    draggable = FALSE,
+                    top = 5,
+                    right = 5,
+                    bottom = "auto",
+                    actionButton("updateButton", "Update Map")
+                )
+            ),
+            verbatimTextOutput("userInfo")
+        )
+    ),
+    tags$footer(
         tags$div(
-            style = "text-align: center; background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 5px;", #nolint
-            "© UK Centre for Ecology & Hydrology, 2025",
+            style = "text-align: centre; padding: 10px;",
+            "© UK Centre for Ecology & Hydrology, 2025"
         )
     )
 )
@@ -274,9 +356,6 @@ server <- function(input, output, session) {
     # Reactive variable for coordinates of user-drawn bbox
     reactiveExtent <- reactiveVal()
 
-    # Reactive variable for toggling greyscale map
-    mapState <- reactiveVal(FALSE)
-
     userInfoText <- reactiveVal("")
 
     output$userInfo <- renderText({
@@ -285,32 +364,18 @@ server <- function(input, output, session) {
 
     clear_user_info <- function() userInfoText("")
 
+    update_user_info <- function(message) {
+        clear_user_info()
+        userInfoText(message)
+    }
+
+    append_user_info <- function(message) {
+        userInfoText(paste(c(userInfoText(), message), collapse = "\n"))
+    }
+
+
     # ------------------------------------------------------ Loading
 
-    # Open a dialogue box to load a new persona
-    observeEvent(input$loadButton, {
-        showModal(
-            modalDialog(
-                title = "Load Persona",
-                selectInput(
-                    "loadUserSelect",
-                    "Select user",
-                    choices = list_users(),
-                    selected = "examples"
-                ),
-                selectInput(
-                    "loadPersonaSelect",
-                    "Select persona",
-                    choices = NULL,
-                    selected = NULL
-                ),
-                footer = tagList(
-                    modalButton("Cancel"),
-                    actionButton("confirmLoad", "Load")
-                )
-            )
-        )
-    })
     observeEvent(input$loadUserSelect, {
         req(input$loadUserSelect)
         reactiveLoadFile(paste0(input$loadUserSelect, ".csv"))
@@ -337,33 +402,35 @@ server <- function(input, output, session) {
         })
 
         userInfoText(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))
+    })
+    observeEvent(input$fileUpload, {
+        if (is.null(input$fileUpload)) return()
 
-        removeModal()
+        tryCatch({
+            . <- model::read_persona_csv(input$fileUpload$datapath)  # nolint
+        }, error = function(e) {
+            update_user_info("Unable to read persona file.")
+            return()
+        })
+
+        user_name <- remove_non_alphanumeric(tools::file_path_sans_ext(basename(input$fileUpload$name)))
+        save_path <- file.path(.persona_dir, paste0(user_name, ".csv"))
+        update_user_info(paste("Attempting to save uploaded persona file, user name:", user_name))
+
+        if (file.exists(save_path)) {
+            append_user_info(paste("A persona file with this name already exists. Please rename the file and try again."))  # nolint
+            return()
+        }
+
+        result <- file.copy(input$fileUpload$datapath, save_path, overwrite = FALSE)
+        
+        users <- list_users()
+        updateSelectInput(session, "loadUserSelect", choices = users, selected = user_name)
+        updateSelectInput(session, "saveUserSelect", choices = users, selected = user_name)
+
     })
 
     # ------------------------------------------------------ Saving
-    observeEvent(input$saveButton, {
-        showModal(
-            modalDialog(
-                title = "Save Persona",
-                selectInput(
-                    "saveUserSelect",
-                    "Select existing user",
-                    choices = c("", list_users())
-                ),
-                textInput("saveUserName", "Or enter a new user name"),
-                textInput(
-                    "savePersonaName",
-                    "Enter a name for the persona",
-                    value = NULL
-                ),
-                footer = tagList(
-                    modalButton("Cancel"),
-                    actionButton("confirmSave", "Save")
-                )
-            )
-        )
-    })
     observeEvent(input$confirmSave, {
         user_name <- if (input$saveUserName != "") input$saveUserName else input$saveUserSelect
         persona_name <- input$savePersonaName
@@ -373,7 +440,7 @@ server <- function(input, output, session) {
         persona_name <- remove_non_alphanumeric(persona_name)
 
         message <- paste0("Saving persona '", persona_name, "' under user '", user_name, "'")
-        
+
         captured_messages <- capture.output(
             model::save_persona(
                 persona = get_persona_from_sliders(),
@@ -384,26 +451,11 @@ server <- function(input, output, session) {
         )
         userInfoText(paste(c(message, captured_messages), collapse = "\n"))
 
-        removeModal()
-    })
+        users <- list_users()
+        updateSelectInput(session, "loadUserSelect", choices = users, selected = user_name)
+        updateSelectInput(session, "saveUserSelect", choices = users, selected = user_name)
 
-    # --------------------------------------------------------------- Download
-    observeEvent(input$downloadButton, {
-        showModal(
-            modalDialog(
-                title = "Download Persona(s)",
-                selectInput(
-                    "downloadUserSelect",
-                    "Select user",
-                    choices = c("", list_users()),
-                    selected = "examples"
-                ),
-                downloadButton("confirmDownload", "Download"),
-                footer = modalButton("Cancel")
-            )
-        )
     })
-
     output$confirmDownload <- downloadHandler(
         filename = function() paste0(input$downloadUserSelect, ".csv"),
         content = function(file) {
@@ -416,12 +468,20 @@ server <- function(input, output, session) {
     # --------------------------------------------------------------- Map
     # Initialize Leaflet map
     output$map <- renderLeaflet({
+        addBaseLayers <- function(map) {
+            for (layer in .base_layers) {
+                map <- addProviderTiles(map, layer, group = layer)
+            }
+            return(map)
+        }
         leaflet() |>
             setView(lng = -4.2026, lat = 56.4907, zoom = 7) |>
-            addTiles(group = "background") |>
+            addBaseLayers() |>
+            hideGroup(.base_layers) |>
+            showGroup(.base_layers[[1]]) |>
             addLegend(
                 title = "Values",
-                position = "topright",
+                position = "bottomright",
                 values = c(0, 1),
                 pal = palette
             ) |>
@@ -443,7 +503,6 @@ server <- function(input, output, session) {
                 circleMarkerOptions = FALSE
             )
     })
-
 
     # Grabs cached layers and updates map with current layer selection
     update_map <- function() {
@@ -478,25 +537,11 @@ server <- function(input, output, session) {
         waiter::waiter_hide()
     }
 
-    # Toggle the tile provider when the button is pressed
-    observeEvent(input$toggleMap, {
-        # Toggle the state
-        newState <- !mapState()
-        mapState(newState)
+    observeEvent(input$baseLayerSelect, {
+        leafletProxy("map") |>
+            hideGroup(c("Esri.WorldStreetMap", "Esri.WorldTopoMap", "Esri.WorldImagery", "Esri.WorldGrayCanvas")) |>
 
-        leafletProxy("map") |> clearGroup("background")
-
-        # Depending on the state, add the appropriate tile layer.
-        if(newState) {
-            # Add greyscale layer
-            leafletProxy("map") |>
-                addProviderTiles("Esri.WorldTopoMap", group = "background")
-        } else {
-            # Re-add full-colour (OSM) tiles
-            leafletProxy("map") |>
-                addTiles(group = "background")
-        }
-
+            showGroup(input$baseLayerSelect)
         update_map()
     })
 

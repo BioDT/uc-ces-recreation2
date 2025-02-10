@@ -1,4 +1,5 @@
 about_html <- tags$div(
+    tags$p(),
     tags$h2("About"),
     "The Recreational Potential value is made up of 87", tags$em("items"), "representing distinct attributes of the land.",
     "The 87 items are grouped into four", tags$em("components"), "which are accessed through the tabs alongside the 'About' tab.",
