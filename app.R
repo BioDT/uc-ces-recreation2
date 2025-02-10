@@ -141,6 +141,9 @@ check_valid_bbox <- function(bbox) {
         message("The area you have selected exceeds the boundaries where we have data (i.e. Scotland)")
         return(FALSE)
     }
+
+    message(paste("Selected an area of", sprintf("%.1e", area), "m^2"))
+
     return(TRUE)
 }
 
@@ -274,6 +277,14 @@ server <- function(input, output, session) {
     # Reactive variable for toggling greyscale map
     mapState <- reactiveVal(FALSE)
 
+    userInfoText <- reactiveVal("")
+
+    output$userInfo <- renderText({
+        userInfoText()
+    })
+
+    clear_user_info <- function() userInfoText("")
+
     # ------------------------------------------------------ Loading
 
     # Open a dialogue box to load a new persona
@@ -325,9 +336,7 @@ server <- function(input, output, session) {
             )
         })
 
-        output$userInfo <- renderText({
-            paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'")
-        })
+        userInfoText(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))
 
         removeModal()
     })
@@ -363,11 +372,9 @@ server <- function(input, output, session) {
         user_name <- remove_non_alphanumeric(user_name)
         persona_name <- remove_non_alphanumeric(persona_name)
 
-        output$userInfo <- renderText({
-            paste0("Saving persona '", persona_name, "' under user '", user_name, "'")
-        })
+        message <- paste0("Saving persona '", persona_name, "' under user '", user_name, "'")
         
-        msg <- capture.output(
+        captured_messages <- capture.output(
             model::save_persona(
                 persona = get_persona_from_sliders(),
                 csv_path = file.path(.persona_dir, paste0(user_name, ".csv")),
@@ -375,9 +382,7 @@ server <- function(input, output, session) {
             ),
             type = "message"
         )
-        output$userInfo <- renderPrint({
-            cat(msg, sep = "\n")
-        })
+        userInfoText(paste(c(message, captured_messages), collapse = "\n"))
 
         removeModal()
     })
@@ -443,7 +448,9 @@ server <- function(input, output, session) {
     # Grabs cached layers and updates map with current layer selection
     update_map <- function() {
         req(reactiveLayers())
-        
+
+        userInfoText("")
+
         waiter::waiter_show(
             html = div(
                 style = "color: #F0F0F0;",
@@ -458,6 +465,10 @@ server <- function(input, output, session) {
 
         if (input$minDisplay > 0) {
             curr_layer <- terra::ifel(curr_layer > input$minDisplay, curr_layer, NA)
+        }
+        
+        if (all(is.na(terra::values(curr_layer)))) {
+            userInfoText("There are no numeric values in this data. Nothing will be displayed.")
         }
 
         leafletProxy("map") |>
@@ -526,9 +537,8 @@ server <- function(input, output, session) {
             valid_persona <- check_valid_persona(persona),
             type = "message"
         )
-        output$userInfo <- renderPrint({
-            cat(msg, sep = "\n")
-        })
+        userInfoText(paste(msg, collapse = "\n"))
+
         if (!valid_persona) return()
 
         bbox <- reactiveExtent()
@@ -537,9 +547,8 @@ server <- function(input, output, session) {
             valid_bbox <- check_valid_bbox(bbox),
             type = "message"
         )
-        output$userInfo <- renderPrint({
-            cat(msg, sep = "\n")
-        })
+        userInfoText(paste(msg, collapse = "\n"))
+
         if (!valid_bbox) return()
 
         waiter::waiter_show(
@@ -559,10 +568,7 @@ server <- function(input, output, session) {
             ),
             type = "message"
         )
-
-        output$userInfo <- renderPrint({
-            cat(msg, sep = "\n")
-        })
+        userInfoText(paste(msg, collapse = "\n"))
 
         # Update reactiveLayers with new raster
         reactiveLayers(layers)
