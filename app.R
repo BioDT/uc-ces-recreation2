@@ -18,12 +18,13 @@ source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 .raster_dir <- "shiny_app/data"
 .persona_dir <- "shiny_app/personas"
 .example_persona_csv <- file.path(.persona_dir, "examples.csv")
+.boundary_shp <- file.path("data", "Scotland", "boundaries.shp")
 .config <- load_config()
 .layer_info <- setNames(.config[["Description"]], .config[["Name"]])
 .layer_names <- names(.layer_info)
 .max_area <- 1e9  # about 1/4 of the Cairngorms area
 .min_area <- 1e4
-.data_extent <- terra::ext(-10000, 660000, 460000, 1220000)  # Scotland bbox
+.data_extent <- terra::ext(terra::vect(.boundary_shp))
 
 .group_names <- list(
     SLSRA_LCM = "Land Cover",
@@ -138,20 +139,32 @@ check_valid_bbox <- function(bbox) {
         return(FALSE)
     }
 
-    within_data_bounds <- (
-        terra::xmin(bbox) >= terra::xmin(.data_extent) &&
-        terra::xmax(bbox) <= terra::xmax(.data_extent) &&
-        terra::ymin(bbox) >= terra::ymin(.data_extent) &&
-        terra::ymax(bbox) <= terra::ymax(.data_extent)
+    entirely_within <- (
+        terra::xmin(bbox) > terra::xmin(.data_extent) &&
+        terra::xmax(bbox) < terra::xmax(.data_extent) &&
+        terra::ymin(bbox) > terra::ymin(.data_extent) &&
+        terra::ymax(bbox) < terra::ymax(.data_extent)
     )
-    if (!within_data_bounds) {
-        message("The area you have selected exceeds the boundaries where we have data (i.e. Scotland)")
+    if (entirely_within) {
+        message(paste("Selected an area of", sprintf("%.1e", area), "m^2"))
+        return(TRUE)
+    }
+
+    entirely_outside <- (
+        terra::xmin(bbox) > terra::xmax(.data_extent) ||
+        terra::xmax(bbox) < terra::xmin(.data_extent) ||
+        terra::ymin(bbox) > terra::ymax(.data_extent) ||
+        terra::ymax(bbox) < terra::ymin(.data_extent)
+    )
+
+    if (entirely_outside) {
+        message("Error: The area you have selected is entirely outside the region where we have data.")
         return(FALSE)
     }
 
-    message(paste("Selected an area of", sprintf("%.1e", area), "m^2"))
-
+    message("Warning: Part of the area you have selected exceeds the boundaries where we have data.")
     return(TRUE)
+
 }
 
 check_valid_persona <- function(persona) {
@@ -235,7 +248,7 @@ ui <- fluidPage(
                         selected = ""
                     ),
                     downloadButton("confirmDownload", "Download")
-                    ),
+                ),
                 tabPanel(
                     "Map Controls",
                     tags$p(),
@@ -285,7 +298,8 @@ ui <- fluidPage(
                     )
                 ),
                 tabPanel(
-                    "FAQ"
+                    "FAQ",
+                    "to do"
                 )
             )
         ),
@@ -400,7 +414,7 @@ server <- function(input, output, session) {
             )
         })
 
-        userInfoText(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))
+        update_user_info(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))
     })
     observeEvent(input$fileUpload, {
         if (is.null(input$fileUpload)) return()
@@ -448,7 +462,7 @@ server <- function(input, output, session) {
             ),
             type = "message"
         )
-        userInfoText(paste(c(message, captured_messages), collapse = "\n"))
+        update_user_info(paste(c(message, captured_messages), collapse = "\n"))
 
         users <- list_users()
         updateSelectInput(session, "loadUserSelect", choices = users, selected = user_name)
@@ -507,7 +521,7 @@ server <- function(input, output, session) {
     update_map <- function() {
         req(reactiveLayers())
 
-        userInfoText("")
+        clear_user_info()
 
         waiter::waiter_show(
             html = div(
@@ -526,7 +540,7 @@ server <- function(input, output, session) {
         }
         
         if (all(is.na(terra::values(curr_layer)))) {
-            userInfoText("There are no numeric values in this data. Nothing will be displayed.")
+            update_user_info("There are no numeric values in this data. Nothing will be displayed.")
         }
 
         leafletProxy("map") |>
@@ -571,6 +585,12 @@ server <- function(input, output, session) {
 
         # Store the SpatExtent as a reactive value
         reactiveExtent(extent_27700)
+
+        msg <- capture.output(
+            check_valid_bbox(extent_27700),
+            type = "message"
+        )
+        update_user_info(msg)
     })
 
     # Recompute raster when update button is clicked
@@ -587,12 +607,7 @@ server <- function(input, output, session) {
 
         bbox <- reactiveExtent()
 
-        msg <- capture.output(
-            valid_bbox <- check_valid_bbox(bbox),
-            type = "message"
-        )
-        userInfoText(paste(msg, collapse = "\n"))
-
+        valid_bbox <- check_valid_bbox(bbox)
         if (!valid_bbox) return()
 
         waiter::waiter_show(
