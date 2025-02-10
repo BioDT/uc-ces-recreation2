@@ -10,7 +10,6 @@ devtools::load_all("model")
 source("shiny_app/about.R")  # contains about_html
 source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 
-
 .credentials <- data.frame(
     user = Sys.getenv("APP_USERNAME"),
     password = Sys.getenv("APP_PASSWORD")
@@ -110,7 +109,8 @@ create_sliders <- function(component) {
 }
 
 palette <- colorNumeric(
-    palette = "viridis",
+    palette = "Spectral",
+    reverse = TRUE,
     domain = c(0, 1),
     na.color = "transparent"
 )
@@ -291,23 +291,22 @@ ui <- fluidPage(
         ),
         mainPanel(
             width = 7,
-            #actionButton("toggleMap", "Toggle Map Type"),
             tags$head(
                 tags$style(HTML("
                     html, body {height: 100%;}
                     #map {height: 80vh !important;}
-                    .leaflet-draw-toolbar a {background-color: red !important;}
-                     #update-button {background-color: red;}
-                "))
+                    .leaflet-draw-toolbar a {background-color: #e67e00 !important;}
+                    .leaflet-draw-toolbar a:hover {background-color: #EAEFEC !important;}
+                     #update-button {background-color: #e67e00; border: 5px; border-radius: 5px;}
+                ")),
             ),
             tags$div(
-                class = "map-container", style = "position: relative;",
+                class = "map-container",
+                style = "position: relative;",
                 leafletOutput("map"),
                 absolutePanel(
                     id = "update-button",
                     class = "fab",
-                    #fixed = TRUE,
-                    draggable = FALSE,
                     top = 5,
                     right = 5,
                     bottom = "auto",
@@ -491,7 +490,7 @@ server <- function(input, output, session) {
                 singleFeature = TRUE,
                 rectangleOptions = drawRectangleOptions(
                     shapeOptions = drawShapeOptions(
-                        color = "#FF0000",
+                        color = "black",
                         weight = 2,
                         fillOpacity = 0
                     )
