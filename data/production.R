@@ -1,7 +1,7 @@
 devtools::load_all("../model")
 
 terra::terraOptions(
-    memfrac = 0.7,
+    memfrac = 0.5,
     datatype = "INTU1", # write everything as unsigned 8 bit int
     print = TRUE
 )
@@ -107,6 +107,47 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
     names(layer) <- feature_mapping
 }
 
+compute_distance_layer <- function(infile, outfile) {
+    layer <- terra::rast(infile)
+    path <- "Scotland/boundaries.shp"
+    aoi <- terra::vect(path)
+    aoi <- terra::ext(aoi)
+    xmin <- terra::xmin(aoi)
+    xmax <- terra::xmax(aoi)
+    ymin <- terra::ymin(aoi)
+    ymax <- terra::ymax(aoi)
+    aoi <- terra::ext(
+        xmin,
+        xmax,
+        # ymin,
+        ymin + 6 * (ymax - ymin) / 8,
+        ymax
+    )
+    layer <- terra::crop(layer, aoi)
+    terra::distance(
+        layer,
+        target = 0,
+        unit = "m",
+        method = "haversine",
+        maxdist = 1500,
+        filename = outfile
+    )
+}
+
+map_distance_to_unit_layer <- function(infile, outfile) {
+    logistic_func <- function(x, kappa = 6, alpha = 0.01011) {
+        (kappa + 1) / (kappa + exp(alpha * x))
+    }
+
+    layer <- terra::rast(infile)
+    terra::app(
+        layer,
+        fun = logistic_func,
+        filename = outfile
+    )
+}
+
+
 time <- function(func, ...) {
     start_time <- Sys.time()
     result <- func(...)
@@ -152,6 +193,44 @@ one_hot_all <- function(indir, outdir) {
     }
 }
 
+compute_distance_all <- function(indir, outdir) {
+    for (component in c("FIPS_I", "Water")) {
+        infiles <- get_files(file.path(indir, component))
+
+        for (infile in infiles) {
+            outfile <- sub("^[^/]+", outdir, infile)
+            dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+
+            message(paste("Performing distance calculation:", infile, "->", outfile))
+
+            time(compute_distance_layer, infile, outfile)
+        }
+    }
+    for (component in c("SLSRA", "FIPS_N")) {
+        message(paste("Creating symbolic link:", indir, "->", outdir))
+        file.symlink(file.path(indir, component), file.path(outdir, component))
+    }
+}
+
+map_distance_to_unit_all <- function(indir, outdir) {
+    for (component in c("FIPS_I", "Water")) {
+        infiles <- get_files(file.path(indir, component))
+
+        for (infile in infiles) {
+            outfile <- sub("^[^/]+", outdir, infile)
+            dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+
+            message(paste("Mapping distances to unit interval:", infile, "->", outfile))
+
+            time(map_distance_to_unit_layer, infile, outfile)
+        }
+    }
+    for (component in c("SLSRA", "FIPS_N")) {
+        message(paste("Creating symbolic link:", indir, "->", outdir))
+        file.symlink(file.path(indir, component), file.path(outdir, component))
+    }
+}
+
 stack_all <- function(indir, outdir) {
     for (component in c("SLSRA", "FIPS_N", "FIPS_I", "Water")) {
         infiles <- get_files(file.path(indir, component))
@@ -159,7 +238,7 @@ stack_all <- function(indir, outdir) {
         outfile <- file.path(outdir, paste0(component, ".tif"))
         dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
-        message(paste("Stacking", component, "into a single raster", outfile))
+        message(paste("Stacking", component, "into a single raster:", indir, "->", outfile))
 
         stacked <- terra::rast(lapply(infiles, terra::rast))
 
@@ -167,8 +246,11 @@ stack_all <- function(indir, outdir) {
     }
 }
 
+
 if (!interactive()) {
-    reproject_all(indir = "Stage_0", outdir = "Stage_1")
-    one_hot_all(indir = "Stage_1", outdir = "Stage_2")
-    stack_all(indir = "Stage_2", outdir = "Stage_3")
+    # reproject_all(indir = "Stage_0", outdir = "Stage_1")
+    # one_hot_all(indir = "Stage_1", outdir = "Stage_2")
+    compute_distance_all(indir = "Stage_2", outdir = "Stage_3")
+    # map_distance_to_unit_all(indir = "Stage_3", outdir = "Stage_4")
+    # stack_all(indir = "Stage_4", outdir = "Stage_5")
 }
