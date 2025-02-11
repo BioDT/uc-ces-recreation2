@@ -15,10 +15,14 @@ custom_theme <- bslib::bs_theme(
             href = "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap"
         )
 ) |>
-    # Make buttons visible again (see https://github.com/NERC-CEH/UKCEH_shiny_theming/issues/5)
-    bslib::bs_add_variables("headings-font-weight" = 600) |>
     # Increase the font weight of the headings
-    bslib::bs_add_rules(".btn {color: black; border-color: darkgrey;}")
+    bslib::bs_add_variables("headings-font-weight" = 600) |>
+    # Make action and download buttons visible again
+    # (see https://github.com/NERC-CEH/UKCEH_shiny_theming/issues/5)
+    bslib::bs_add_rules("
+        .btn {color: black; border-color: darkgrey;}
+        .btn.shiny-download-link {color: black; border-color: darkgrey;}
+    ")
 
 custom_titlePanel <- function(title, windowTitle = title) {
     div(

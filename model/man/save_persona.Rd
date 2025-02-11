@@ -4,7 +4,7 @@
 \alias{save_persona}
 \title{Save Persona}
 \usage{
-save_persona(persona, csv_path, name)
+save_persona(persona, csv_path, name, overwrite = FALSE)
 }
 \arguments{
 \item{persona}{\code{integer} A vector of integers representing the persona}

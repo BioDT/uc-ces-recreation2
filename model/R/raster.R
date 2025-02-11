@@ -121,6 +121,10 @@ rescale_to_unit_interval <- function(raster) {
     min_value <- min(terra::values(raster), na.rm = TRUE)
     max_value <- max(terra::values(raster), na.rm = TRUE)
 
+    if (max_value == min_value) {
+        message(paste("The data could not be rescaled to the interval [0, 1], because the smallest and largest value are the same number", max_value)) # nolint
+    }
+
     result <- (raster - min_value) / (max_value - min_value)
 
     return(result)
