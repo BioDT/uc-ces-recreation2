@@ -7,7 +7,7 @@ devtools::load_all("model")
 # NOTE: this did not immediately work..
 #devtools::install_github("BioDT/uc-ces-recreation2", subdir = "model", ref = "develop")
 
-source("shiny_app/about.R")  # contains about_html
+source("shiny_app/content.R")  # contains {content}_html
 source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 
 .credentials <- data.frame(
@@ -189,33 +189,21 @@ ui <- fluidPage(
             tabsetPanel(
                 tabPanel("About", about_html),
                 tabPanel(
-                    "Load Persona",
+                    "User Guide",
                     tags$p(),
-                    tags$h3("Load Persona"),
-                    selectInput(
-                        "loadUserSelect",
-                        "Select user",
-                        choices = list_users(),
-                        selected = "examples"
-                    ),
-                    selectInput(
-                        "loadPersonaSelect",
-                        "Select persona",
-                        choices = NULL,
-                        selected = NULL
-                    ),
-                    actionButton("confirmLoad", "Load"),
-                    hr(),
-                    fileInput(
-                        "fileUpload",
-                        "Upload a persona file",
-                        accept = c(".csv")
+                    tabsetPanel(
+                        tabPanel("Create a Persona", persona_html),
+                        tabPanel("Run the Model", model_html),
+                        tabPanel("Adjust the Visualisation", viz_html),
+                        tabPanel("FAQ", faq_html)
                     )
                 ),
                 tabPanel(
-                    "Edit Persona",
+                    "Persona",
                     tags$p(),
-                    tags$h3("Edit Persona"),
+                    actionButton("loadButton", "Load Persona"),
+                    actionButton("saveButton", "Save Persona"),
+                    tags$p(),
                     tabsetPanel(
                         tabPanel("SLSRA", create_sliders("SLSRA")),
                         tabPanel("FIPS_N", create_sliders("FIPS_N")),
@@ -224,35 +212,9 @@ ui <- fluidPage(
                     )
                 ),
                 tabPanel(
-                    "Save Persona",
+                    "Map Control",
                     tags$p(),
-                    tags$h3("Save Persona"),
-                    selectInput(
-                        "saveUserSelect",
-                        "Select existing user",
-                        choices = c("", list_users()),
-                        selected = ""
-                    ),
-                    textInput("saveUserName", "Or enter a new user name"),
-                    textInput(
-                        "savePersonaName",
-                        "Enter a name for the persona",
-                        value = NULL
-                    ),
-                    actionButton("confirmSave", "Save"),
-                    hr(),
-                    selectInput(
-                        "downloadUserSelect",
-                        "Download persona File",
-                        choices = c("", list_users()),
-                        selected = ""
-                    ),
-                    downloadButton("confirmDownload", "Download")
-                ),
-                tabPanel(
-                    "Map Controls",
-                    tags$p(),
-                    tags$h3("Data Layers"),
+                    tags$h3("Data layers"),
                     radioButtons(
                         "layerSelect",
                         "Select which component to display on the map",
@@ -283,12 +245,12 @@ ui <- fluidPage(
                         width = 300,
                         min = 0,
                         max = 1,
-                        value = 0.8,
+                        value = 1,
                         step = 0.2,
                         ticks = FALSE
                     ),
                     tags$hr(),
-                    tags$h3("Base Map"),
+                    tags$h3("Base map"),
                     radioButtons(
                         "baseLayerSelect",
                         "Select a base map",
@@ -296,10 +258,6 @@ ui <- fluidPage(
                         selected = .base_layers[[1]],
                         inline = TRUE
                     )
-                ),
-                tabPanel(
-                    "FAQ",
-                    "to do"
                 )
             )
         ),
@@ -330,12 +288,72 @@ ui <- fluidPage(
             verbatimTextOutput("userInfo")
         )
     ),
-    tags$footer(
-        tags$div(
-            style = "text-align: centre; padding: 10px;",
-            "© UK Centre for Ecology & Hydrology, 2025"
+    tags$hr(),
+    fluidRow(
+        column(
+            width = 6,
+            style = "text-align: left;",
+            "Information about how we process your data can be found in our ", tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice.", target = "_blank"),
+            tags$br(),
+            "Contact: Dr Jan Dick (jand@ceh.ac.uk)."
+        ),
+        column(
+            width = 6,
+            style = "text-align: right;",
+            "© UK Centre for Ecology & Hydrology and BioDT, 2025."
         )
     )
+)
+
+load_dialog <- modalDialog(
+    title = "Load Persona",
+    selectInput(
+        "loadUserSelect",
+        "Select user",
+        choices = list_users(),
+        selected = "examples"
+    ),
+    selectInput(
+        "loadPersonaSelect",
+        "Select persona",
+        choices = NULL,
+        selected = NULL
+    ),
+    actionButton("confirmLoad", "Load"),
+    hr(),
+    fileInput(
+        "fileUpload",
+        "Upload a persona file",
+        accept = c(".csv")
+    ),
+    footer = tagList(
+        modalButton("Cancel"),
+    )
+)
+save_dialog <- modalDialog(
+    title = "Save Persona",
+    selectInput(
+        "saveUserSelect",
+        "Existing users: select your user name",
+        choices = c("", list_users()),
+        selected = ""
+    ),
+    textInput("saveUserName", "New users: enter a user name"),
+    textInput(
+        "savePersonaName",
+        "Enter a unique name for the persona",
+        value = NULL
+    ),
+    actionButton("confirmSave", "Save"),
+    hr(),
+    selectInput(
+        "downloadUserSelect",
+        "Download persona File",
+        choices = c("", list_users()),
+        selected = ""
+    ),
+    downloadButton("confirmDownload", "Download"),
+    footer = modalButton("Cancel")
 )
 
 # Add password authorisation
@@ -389,6 +407,10 @@ server <- function(input, output, session) {
 
     # ------------------------------------------------------ Loading
 
+    observeEvent(input$loadButton, {
+        showModal(load_dialog)
+    })
+
     observeEvent(input$loadUserSelect, {
         req(input$loadUserSelect)
         reactiveLoadFile(paste0(input$loadUserSelect, ".csv"))
@@ -415,6 +437,8 @@ server <- function(input, output, session) {
         })
 
         update_user_info(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))
+
+        removeModal()
     })
     observeEvent(input$fileUpload, {
         if (is.null(input$fileUpload)) return()
@@ -444,6 +468,10 @@ server <- function(input, output, session) {
     })
 
     # ------------------------------------------------------ Saving
+
+    observeEvent(input$saveButton, {
+        showModal(save_dialog)
+    })
     observeEvent(input$confirmSave, {
         user_name <- if (input$saveUserName != "") input$saveUserName else input$saveUserSelect
         persona_name <- input$savePersonaName
@@ -467,6 +495,8 @@ server <- function(input, output, session) {
         users <- list_users()
         updateSelectInput(session, "loadUserSelect", choices = users, selected = user_name)
         updateSelectInput(session, "saveUserSelect", choices = users, selected = user_name)
+
+        removeModal()
 
     })
     output$confirmDownload <- downloadHandler(
