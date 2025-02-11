@@ -381,6 +381,8 @@ server <- function(input, output, session) {
     # Reactive variable to track the csv file that's been selected for loading
     reactiveLoadFile <- reactiveVal()
 
+    reactivePersonaList <- reactiveVal()
+
     # Reactive variable for caching computed raster
     reactiveLayers <- reactiveVal()
 
@@ -408,6 +410,7 @@ server <- function(input, output, session) {
     # ------------------------------------------------------ Loading
 
     observeEvent(input$loadButton, {
+        updateSelectInput(session, "loadUserSelect", choices = list_users(), selected = reactiveLoadFile())
         showModal(load_dialog)
     })
 
@@ -416,12 +419,16 @@ server <- function(input, output, session) {
         reactiveLoadFile(paste0(input$loadUserSelect, ".csv"))
     })
     observeEvent(reactiveLoadFile(), {
+        reactivePersonaList(list_personas_in_file(reactiveLoadFile()))
+    })
+    observeEvent(reactivePersonaList(), {
         updateSelectInput(
             session,
             "loadPersonaSelect",
-            choices = list_personas_in_file(reactiveLoadFile())
+            choices = reactivePersonaList()
         )
     })
+
     observeEvent(input$confirmLoad, {
         loaded_persona <- model::load_persona(
             file.path(.persona_dir, reactiveLoadFile()),
@@ -461,15 +468,16 @@ server <- function(input, output, session) {
 
         result <- file.copy(input$fileUpload$datapath, save_path, overwrite = FALSE)
         
-        users <- list_users()
-        updateSelectInput(session, "loadUserSelect", choices = users, selected = user_name)
-        updateSelectInput(session, "saveUserSelect", choices = users, selected = user_name)
+        updateSelectInput(session, "loadUserSelect", choices = list_users(), selected = user_name)
+        updateSelectInput(session, "downloadUserSelect", choices = list_users(), selected = user_name)
 
     })
 
     # ------------------------------------------------------ Saving
 
     observeEvent(input$saveButton, {
+        updateSelectInput(session, "saveUserSelect", choices = list_users(), selected = reactiveLoadFile())
+        updateSelectInput(session, "downloadUserSelect", choices = list_users(), selected = reactiveLoadFile())
         showModal(save_dialog)
     })
     observeEvent(input$confirmSave, {
@@ -492,9 +500,7 @@ server <- function(input, output, session) {
         )
         update_user_info(paste(c(message, captured_messages), collapse = "\n"))
 
-        users <- list_users()
-        updateSelectInput(session, "loadUserSelect", choices = users, selected = user_name)
-        updateSelectInput(session, "saveUserSelect", choices = users, selected = user_name)
+        updateSelectInput(session, "saveUserSelect", choices = list_users(), selected = user_name)
 
         removeModal()
 
