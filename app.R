@@ -18,7 +18,7 @@ source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 .raster_dir <- "shiny_app/data"
 .persona_dir <- "shiny_app/personas"
 .example_persona_csv <- file.path(.persona_dir, "examples.csv")
-.boundary_shp <- file.path("data", "Scotland", "boundaries.shp")
+.boundary_shp <- file.path("shiny_app", "data", "Scotland", "boundaries.shp")
 .config <- load_config()
 .layer_info <- setNames(.config[["Description"]], .config[["Name"]])
 .layer_names <- names(.layer_info)
