@@ -637,7 +637,11 @@ server <- function(input, output, session) {
 
         bbox <- reactiveExtent()
 
-        valid_bbox <- check_valid_bbox(bbox)
+        msg <- capture.output(
+            valid_bbox <- check_valid_bbox(bbox),
+            type = "message"
+        )
+        update_user_info(msg)
         if (!valid_bbox) return()
 
         waiter::waiter_show(
