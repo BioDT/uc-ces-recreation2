@@ -3,42 +3,40 @@ title: Inspecting the raw data
 format:
   html:
     embed-resources: true
+    code-fold: false
 ---
 
-```{r}
+```{r include=FALSE}
 library(terra)
 
 devtools::load_all("../model")
+source("production.R")
 
 config <- load_config()
 feature_mappings <- get_feature_mappings(config)
 
-bush <- vect("DataLabs/Raw_Shapefile/Bush/Bush.shp")
+bush <- vect("Shapefiles/Bush/Bush.shp")
+cairngorms <- vect("Legacy/Legacy_Data/input/Raw_Shapefile/CairngormNP/CairngormNP.shp")
 ```
 
-```{r}
-raw_data_dir <- "DataLabs"
 
-file_paths <- lapply(
-    list.files(path = raw_data_dir, pattern = "\\.tif$", recursive = TRUE),
-    function(file_) file.path(raw_data_dir, file_)
-)
-file_stems <- lapply(
-    file_paths,
-    function(path) tools::file_path_sans_ext(basename(path))
-)
-files <- setNames(file_paths, file_stems)
+## Properties of the raw data (Stage 0)
 
-# There are more files than feature mappigs...
-paste(length(files), length(feature_mappings))
+There are more files than feature mappings, but there are no feature mappings missing - good.
+
+```{r eval=FALSE}
+files <- get_files("Stage_0")
+
+# There are more files than feature mappings...
+paste("Number of files:", length(files), "| Number of features:", length(feature_mappings))
 
 # So check that the feature mappings are a subset
 stopifnot(all(names(feature_mappings) %in% names(files)))
 ```
 
-## Properties of the original tiffs
+Print a table of properties.
 
-```{r}
+```{r eval=FALSE}
 properties <- lapply(files, function(file_) {
     raster <- rast(file_)
     info <- c(
@@ -50,80 +48,123 @@ properties <- lapply(files, function(file_) {
     )
     return(info)
 })
-
 properties_df <- as.data.frame(
-    do.call(rbind, properties),  # creates matrix
+    do.call(rbind, properties),  # creates matrixc
     stringsAsFactor = FALSE
 )
 properties_df
+```
 
+Check that all data except slopes are integer-valued, with values matching the feature mappings
+
+```{r eval=FALSE}
 # Check all values are integers
-for(file_ in files) {
-    
+for (layer in names(files)) {
+
     # Slope has non-integer values
-    if (file_ == files[["FIPS_N_Slope"]]) next
+    if (layer == "FIPS_N_Slope") next
 
-    raster <- file_ |>
+    # NOTE: Too expensive!
+    if (layer != "FIPS_N_Landform") next
+
+    unique_vals <- files[[layer]] |>
         rast() |>
-        crop(bush)
+        # This is more suited to FIPS_N and SLSRA
+        spatSample(size = 100, values = TRUE, na.rm = TRUE) |>
+        # This is more suited to linear features: FIPS_I, Water
+        #spatSample(size = 100, values = TRUE, na.rm = TRUE, ext = bush, exhaustive = TRUE) |>
+        unique()
 
-    print(cat(basename(file_), unique(values(raster)), "\n", sep = " "))
+    # NOTE: names(feature_mappings[[layer]]) are the Raster_Val column
+    # This is my bad for mixing up the order of names/values in get_feature_mappings
+    not_mapped <- !sapply(unique_vals, function(val) val %in% names(feature_mappings[[layer]]))
+
+    if (any(not_mapped)) {
+        print(paste0("The layer '", layer, "' contains value(s) '", unique_vals[not_mapped], "' which are not present in the feature mappings."))
+    }
 }
 ```
 
-## Test converting CRS and extent
+### Test converting CRS and extent
 
-```{r}
+Note that we get the *wrong* result if we crop before reprojecting, since the shapefiles are in EPSG:27700.
+So even for this quick test we need to reproject the whole scotland-wide raster before cropping.
+
+```{r eval=FALSE}
 reference <- rast(
     crs = "EPSG:27700",
     res = c(20, 20),
     ext = ext(-10000, 660000, 460000, 1220000) # xmin, xmax, ymin, ymax
 )
 
-raster <- files[["Water_Rivers"]] |>
+files[["Water_Rivers"]] |>
     rast() |>
-    project(reference) |>
+    project(reference, method = "near") |>
     crop(bush) |>
-    round()
-
-plot(raster)
-```
-
-```r
-
-for(file_ in files) {
-    raster <- file_ |>
-        rast() |>
-        crop(bush) |>
-        project(reference) |>
-        round()
-}
+    plot()
 ```
 
 
-## Test
+## Properties of the Level 1 data
 
 ```r
-file_paths <- lapply(
-    list.files(path = file.path("Legacy", "Maddalena_Raw_Data", "Water"), pattern = "\\.tif$"),
-    function(file_) file.path("Legacy", "Maddalena_Raw_Data", "Water", file_)
+files <- get_files("Stage_1")
+
+files[["FIPS_N_Landform"]] |>
+    rast() |>
+    #crop(cairngorms) |>
+    plot()
+
+files[["FIPS_I_RoadsTracks"]] |>
+    rast() |>
+    crop(bush) |>
+    plot()
+```
+
+Repeat checks
+
+```{r eval=FALSE}
+properties <- lapply(files, function(file_) {
+    raster <- rast(file_)
+    info <- c(
+        #file_size = file.info(file_)$size,
+        nlyr = nlyr(raster),
+        res = res(raster),
+        ext = as.vector(ext(raster)),
+        origin = origin(raster)
+    )
+    return(info)
+})
+properties_df <- as.data.frame(
+    do.call(rbind, properties),  # creates matrix
+    stringsAsFactor = FALSE
 )
-file_stems <- lapply(
-    file_paths,
-    function(path) tools::file_path_sans_ext(basename(path))
-)
-files <- setNames(file_paths, file_stems)
-files
-
-stacked <- rast(lapply(files, rast))
-nlyr(stacked)
-names(stacked)
+properties_df
 ```
 
-```r
-r <- rast("Processed/FIPS_N/slope/FIPS_N_Slope.tif")
-names(r)
+## Properties of the Stage 2 data
+
+```{r}
+files <- get_files("Stage_2")
+
+files[["FIPS_N_Landform"]] |>
+    rast() |>
+    subset(1) |>
+    plot()
+
+files[["FIPS_I_RoadsTracks"]] |>
+    rast() |>
+    crop(bush) |>
+    plot()
 ```
+
+```{r}
+layers <- rast(files[["FIPS_I_RoadsTracks"]])
+layers <- ifel(is.na(layers), 0, layers)
+
+plot(crop(layers, bush))
+```
+
 
 ## Properties of the processed tiffs
 
@@ -144,5 +185,5 @@ files
 ```
 
 ```r
-files[[1]] |> rast() |> crop(bush) |> plot()
+files[[1]] |> rast() |> crop(aoi) |> plot()
 ```

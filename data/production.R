@@ -120,7 +120,7 @@ compute_distance_layer <- function(infile, outfile) {
         xmin,
         xmax,
         # ymin,
-        ymin + 6 * (ymax - ymin) / 8,
+        ymin + (ymax - ymin) / 10,
         ymax
     )
     layer <- terra::crop(layer, aoi)
@@ -129,7 +129,7 @@ compute_distance_layer <- function(infile, outfile) {
         target = 0,
         unit = "m",
         method = "haversine",
-        maxdist = 1500,
+        maxdist = 1500, # NOTE: this requires terra version 1.8.21 !!
         filename = outfile
     )
 }
@@ -193,6 +193,22 @@ one_hot_all <- function(indir, outdir) {
     }
 }
 
+
+stack_all <- function(indir, outdir) {
+    for (component in c("SLSRA", "FIPS_N", "FIPS_I", "Water")) {
+        infiles <- get_files(file.path(indir, component))
+
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+
+        message(paste("Stacking", component, "into a single raster:", indir, "->", outfile))
+
+        stacked <- terra::rast(lapply(infiles, terra::rast))
+
+        terra::writeRaster(stacked, outfile, datatype = "INT1U", overwrite = TRUE)
+    }
+}
+
 compute_distance_all <- function(indir, outdir) {
     for (component in c("FIPS_I", "Water")) {
         infiles <- get_files(file.path(indir, component))
@@ -231,26 +247,13 @@ map_distance_to_unit_all <- function(indir, outdir) {
     }
 }
 
-stack_all <- function(indir, outdir) {
-    for (component in c("SLSRA", "FIPS_N", "FIPS_I", "Water")) {
-        infiles <- get_files(file.path(indir, component))
-
-        outfile <- file.path(outdir, paste0(component, ".tif"))
-        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
-
-        message(paste("Stacking", component, "into a single raster:", indir, "->", outfile))
-
-        stacked <- terra::rast(lapply(infiles, terra::rast))
-
-        terra::writeRaster(stacked, outfile, datatype = "INT1U", overwrite = TRUE)
-    }
-}
-
 
 if (!interactive()) {
     # reproject_all(indir = "Stage_0", outdir = "Stage_1")
     # one_hot_all(indir = "Stage_1", outdir = "Stage_2")
-    compute_distance_all(indir = "Stage_2", outdir = "Stage_3")
+    # stack_all(indir = "Stage_2", outdir = "Stage_3")
+    # compute_distance_all(indir = "Stage_2", outdir = "Stage_3")
     # map_distance_to_unit_all(indir = "Stage_3", outdir = "Stage_4")
-    # stack_all(indir = "Stage_4", outdir = "Stage_5")
+} else {
+    print("dogs!")
 }
