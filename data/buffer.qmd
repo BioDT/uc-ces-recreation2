@@ -13,32 +13,89 @@ devtools::load_all("../model")
 config <- load_config()
 feature_mappings <- get_feature_mappings(config)
 
-aoi <- vect("Shapefiles/Bush/Bush.shp")
-aoi <- vect("Shapefiles/BenVorlich/BenVorlich.shp")
-#aoi <- vect("Shapefiles/Clackmann/Clackmann.shp")
-aoi <- vect("Legacy/Legacy_Data/input/Raw_Shapefile/CairngormNP/CairngormNP.shp")
+benv <- vect("data/Shapefiles/BenVorlich/BenVorlich.shp")
+#aoi <- vect("data/Shapefiles/Clackmann/Clackmann.shp")
+cairngorms <- vect("data/Legacy/Legacy_Data/input/Raw_Shapefile/CairngormNP/CairngormNP.shp")
+bush <- vect("data/Shapefiles/Bush/Bush.shp")
 ```
 
+## Test distance calculation on a single-class layer
+
+Start with the local path network, where there is only one layer, so it's either present or `NA`.
+
 ```{r}
-path <- "Stage_2/FIPS_I/FIPS_I_NationalCycleNetwork.tif"
-path <- "Stage_2/FIPS_I/FIPS_I_LocalPathNetwork.tif"
-raster <- rast(path) |> crop(aoi)
+path <- "data/old_stage_2/FIPS_I/FIPS_I_LocalPathNetwork.tif"
+raster <- rast(path) |> crop(bush)
+
+# Check which values are present - should be 1 and NA
+unique(values(raster))
+
+plot(raster, col = c("black"))
+
+# Buffer around all non-NA
+# NOTE: cannot have a mixture of 0 and NA for absence of feature here!
+# The one-hot encoding step must have set absence -> NA, or else
+# We need to first do an ifel(raster == 0, NA, raster) kind of thing
+buf <- buffer(raster, width = 500, background = FALSE)
+plot(buf)
+
+# NA to 0 everywhere except data
+# NOTE: the masking step will ignore missing values, so we now need to to a
+# whole NA->0 just so that we can mask most of them out again
+# This seems wasteful!
+raster <- ifel(is.na(raster), 0, raster)
+plot(raster)
+
+# 0 to NA outside buffer region
+# Set values to NA wherever buf is FALSE
+raster <- mask(raster, buf, maskvalues = FALSE, updatevalue = NA)
+plot(raster)
+
+# Compute distances to non-zero (i.e. 1) values wherever the value is
+# currently 0, and skipping all NA values entirely
+dist <- distance(raster, target = 0, exclude = NA)
+plot(dist)
+```
+
+## Fewer NA/0 conversions?
+
+This is not documented anywhere I can see (see [documentation](https://rspatial.github.io/terra/reference/buffer.html)), but it looks like if you set `background = NA` in `terra::buffer`, the buffer gets mapped to 1, the original non-NA values get mapped to 0, and everything else gets mapped to NA.
+
+This is precisely the trichotomous split we need, and we can easily invert the non-NA values using logical negation (`!`) or `1 - x`.
+
+```{r}
+path <- "data/old_stage_2/FIPS_I/FIPS_I_LocalPathNetwork.tif"
+raster <- rast(path) |> crop(bush)
+
+buf <- buffer(raster, width = 500, background = NA)
+plot(buf)
+
+plot(1 - buf)
+
+dist <- distance(1 - buf, target = 0, exclude = NA)
+plot(dist)
+```
+
+## Test on multiclass layers
+
+Now try the cycle network, where there are multiple layers (`1`, `0`, `NA`)
+
+```{r}
+path <- "data/old_stage_2/FIPS_I/FIPS_I_RoadsTracks.tif"
+raster <- rast(path) |> crop(bush)
 
 unique(values(raster))
 
 plot(raster)
 
-buf <- buffer(raster, width = 500)
+# Until we reproduce the data
+raster <- ifel(raster == 0, NA, raster)
+plot(raster, col = c("black"))
+
+buf <- buffer(raster, width = 500, background = NA)
 plot(buf)
 
-raster <- ifel(is.na(raster), 0, raster)
-plot(raster)
-
-raster <- mask(raster, buf, maskvalues=FALSE, updatevalue=NA)
-plot(raster)
-
-#dist <- distance(raster)
-dist <- distance(raster, target=0, exclude = NA)
+dist <- distance(1 - buf, target = 0, exclude = NA)
 plot(dist)
 ```
 

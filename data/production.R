@@ -1,7 +1,7 @@
 devtools::load_all("../model")
 
 terra::terraOptions(
-    memfrac = 0.5,
+    memfrac = 0.7,
     datatype = "INTU1", # write everything as unsigned 8 bit int
     print = TRUE
 )
@@ -59,18 +59,16 @@ reproject_layer <- function(infile, outfile) {
     )
 }
 
-one_hot_layer_old <- function(infile, outfile, feature_mapping) {
+.one_hot_layer_old <- function(infile, outfile, feature_mapping) {
     layer <- terra::rast(infile)
     stopifnot(terra::nlyr(layer) == 1)
 
     sublayer_stack <- lapply(
         # NOTE: These names are integer values (Raster_Val column in config.csv)
-        names(feature_mapping),
+        feature_mapping,
         function(i) {
-            sublayer_i <- terra::ifel(layer == as.numeric(i), 1, 0)
-            # NOTE: feature_mapping[i] may be "feature_j" where j =\= i !
-            # E.g. FIPS_N_Landform_2 has a 'Raster_Val' of 3, unfortunately
-            names(sublayer_i) <- feature_mapping[i]
+            sublayer_i <- terra::ifel(layer == as.numeric(i), 1, NA)
+            names(sublayer_i) <- names(feature_mapping)[i]
             return(sublayer_i)
         }
     )
@@ -86,12 +84,10 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
     layer <- terra::rast(infile)
     stopifnot(terra::nlyr(layer) == 1)
 
-    raster_vals <- names(feature_mapping)
-
     one_hot_pixel <- function(x) {
-        out <- matrix(0, nrow = length(x), ncol = length(raster_vals))
-        for (i in seq_along(raster_vals)) {
-            out[, i] <- ifelse(x == as.numeric(raster_vals[i]), 1, 0)
+        out <- matrix(0, nrow = length(x), ncol = length(feature_mapping))
+        for (i in seq_along(feature_mapping)) {
+            out[, i] <- ifelse(x == as.numeric(feature_mapping[i]), 1, NA)
         }
         return(out)
     }
@@ -100,11 +96,12 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
         layer,
         fun = one_hot_pixel,
         filename = outfile,
-        # datatype = "INT1U",
-        overwrite = TRUE
+        overwrite = TRUE,
+        wopt = list(
+            names = names(feature_mapping),
+            datatype = "INT1U"
+        )
     )
-
-    names(layer) <- feature_mapping
 }
 
 compute_distance_layer <- function(infile, outfile) {
@@ -250,7 +247,7 @@ map_distance_to_unit_all <- function(indir, outdir) {
 
 if (!interactive()) {
     # reproject_all(indir = "Stage_0", outdir = "Stage_1")
-    # one_hot_all(indir = "Stage_1", outdir = "Stage_2")
+    one_hot_all(indir = "data/Stage_1", outdir = "data/Stage_2")
     # stack_all(indir = "Stage_2", outdir = "Stage_3")
     # compute_distance_all(indir = "Stage_2", outdir = "Stage_3")
     # map_distance_to_unit_all(indir = "Stage_3", outdir = "Stage_4")

@@ -1,7 +1,11 @@
-Legacy/
-DataLabs/
-Shapefiles/
-Stage_*/
-renv.lock
-renv/
+/data/
+/renv/
+/.quarto/
+/_output/
+/_freeze/
+
+*.html
 *.tar.gz
+*.tif
+
+/smee/
