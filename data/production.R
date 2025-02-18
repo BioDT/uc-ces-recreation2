@@ -2,7 +2,7 @@ devtools::load_all("../model")
 
 terra::terraOptions(
     memfrac = 0.7,
-    datatype = "INTU1", # write everything as unsigned 8 bit int
+    # datatype = "INTU1", # write everything as unsigned 8 bit int
     print = TRUE
 )
 
@@ -59,6 +59,7 @@ reproject_layer <- function(infile, outfile) {
     )
 }
 
+# This should be deleted eventually, but I am curious to compare the speed
 .one_hot_layer_old <- function(infile, outfile, feature_mapping) {
     layer <- terra::rast(infile)
     stopifnot(terra::nlyr(layer) == 1)
@@ -104,43 +105,44 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
     )
 }
 
-compute_distance_layer <- function(infile, outfile) {
-    layer <- terra::rast(infile)
-    path <- "Scotland/boundaries.shp"
-    aoi <- terra::vect(path)
-    aoi <- terra::ext(aoi)
-    xmin <- terra::xmin(aoi)
-    xmax <- terra::xmax(aoi)
-    ymin <- terra::ymin(aoi)
-    ymax <- terra::ymax(aoi)
-    aoi <- terra::ext(
-        xmin,
-        xmax,
-        # ymin,
-        ymin + (ymax - ymin) / 10,
-        ymax
-    )
-    layer <- terra::crop(layer, aoi)
-    terra::distance(
-        layer,
-        target = 0,
-        unit = "m",
-        method = "haversine",
-        maxdist = 1500, # NOTE: this requires terra version 1.8.21 !!
-        filename = outfile
+compute_buffer <- function(infile, outfile) {
+    raster <- terra::rast(infile)
+
+    # TODO: remove crop and run somewhere with more memory
+    raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
+
+    terra::buffer(
+        raster,
+        width = 500, # metres
+        background = NA,
+        filename = outfile,
+        datatype = "INT2S" # So NA is represented properly TODO: replace with INT1S
     )
 }
 
-map_distance_to_unit_layer <- function(infile, outfile) {
+compute_distance <- function(infile, outfile) {
+    raster <- terra::rast(infile) # this is the buffer
+    terra::distance(
+        raster,
+        target = 1,
+        exclude = NA,
+        unit = "m",
+        method = "haversine",
+        filename = outfile,
+        datatype = "FLT4S"
+    )
+}
+
+map_distance_to_unit <- function(infile, outfile) {
     logistic_func <- function(x, kappa = 6, alpha = 0.01011) {
         (kappa + 1) / (kappa + exp(alpha * x))
     }
-
-    layer <- terra::rast(infile)
+    raster <- terra::rast(infile)
     terra::app(
-        layer,
+        raster,
         fun = logistic_func,
         filename = outfile
+        # NOTE: datatype inferred from raster - cannot be changed
     )
 }
 
@@ -164,6 +166,7 @@ reproject_all <- function(indir, outdir) {
     stopifnot(all(names(.feature_mappings) %in% names(infiles)))
 
     for (infile in infiles) {
+        # TODO: fix this for nested indir/outdir
         outfile <- sub("^[^/]+", outdir, infile)
         dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
@@ -178,6 +181,7 @@ one_hot_all <- function(indir, outdir) {
     stopifnot(all(names(.feature_mappings) %in% names(infiles)))
 
     for (infile in infiles) {
+        # TODO: fix this for nested indir/outdir
         outfile <- sub("^[^/]+", outdir, infile)
         dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
@@ -208,49 +212,38 @@ stack_all <- function(indir, outdir) {
 
 compute_distance_all <- function(indir, outdir) {
     for (component in c("FIPS_I", "Water")) {
-        infiles <- get_files(file.path(indir, component))
+        infile <- file.path(indir, paste0(component, ".tif"))
+        buf_file <- file.path(outdir, paste0(component, "_buf.tif"))
+        dist_file <- file.path(outdir, paste0(component, "_dist.tif"))
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
-        for (infile in infiles) {
-            outfile <- sub("^[^/]+", outdir, infile)
-            dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+        message(paste("Computing buffer:", infile, "->", buf_file))
+        time(compute_buffer, infile, buf_file)
 
-            message(paste("Performing distance calculation:", infile, "->", outfile))
+        message(paste("Performing distance calculation:", buf_file, "->", dist_file))
+        time(compute_distance, buf_file, dist_file)
 
-            time(compute_distance_layer, infile, outfile)
-        }
+        message(paste("Mapping distance to unit interval:", dist_file, "->", outfile))
+        time(map_distance_to_unit, dist_file, outfile)
     }
+
     for (component in c("SLSRA", "FIPS_N")) {
-        message(paste("Creating symbolic link:", indir, "->", outdir))
-        file.symlink(file.path(indir, component), file.path(outdir, component))
+        infile <- file.path(indir, component)
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+        message(paste("Creating symbolic link:", infile, "->", outfile))
+        file.symlink(infile, outfile)
     }
 }
 
-map_distance_to_unit_all <- function(indir, outdir) {
-    for (component in c("FIPS_I", "Water")) {
-        infiles <- get_files(file.path(indir, component))
-
-        for (infile in infiles) {
-            outfile <- sub("^[^/]+", outdir, infile)
-            dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
-
-            message(paste("Mapping distances to unit interval:", infile, "->", outfile))
-
-            time(map_distance_to_unit_layer, infile, outfile)
-        }
-    }
-    for (component in c("SLSRA", "FIPS_N")) {
-        message(paste("Creating symbolic link:", indir, "->", outdir))
-        file.symlink(file.path(indir, component), file.path(outdir, component))
-    }
-}
-
-
+# TODO: this doesn't seem to work - interactive() still seems to be TRUE
+# if loading using source(production.R)...
 if (!interactive()) {
     # reproject_all(indir = "Stage_0", outdir = "Stage_1")
-    one_hot_all(indir = "data/Stage_1", outdir = "data/Stage_2")
-    # stack_all(indir = "Stage_2", outdir = "Stage_3")
-    # compute_distance_all(indir = "Stage_2", outdir = "Stage_3")
-    # map_distance_to_unit_all(indir = "Stage_3", outdir = "Stage_4")
+    # one_hot_all(indir = "data/Stage_1", outdir = "data/Stage_2")
+    # stack_all(indir = "data/Stage_2", outdir = "data/Stage_2")
+    # compute_distance_all(indir = "data/Stage_2", outdir = "data/Stage_3")
 } else {
     print("dogs!")
 }

@@ -142,47 +142,29 @@ names(smee)
 names(rast("smee.tif"))
 ```
 
-## Properties of the Stage 2 data
+## Check the designated areas
 
-```r
-
-files[["FIPS_N_Landform"]] |>
-    rast() |>
-    subset(1) |>
-    plot()
-
-files[["FIPS_I_RoadsTracks"]] |>
-    rast() |>
-    crop(bush) |>
-    plot()
-```
-
-```r
-layers <- rast(files[["FIPS_I_RoadsTracks"]])
-layers <- ifel(is.na(layers), 0, layers)
-
-plot(crop(layers, bush))
-```
-
-
-## Properties of the processed tiffs
-
-```r
-processed_data_dir <- "Processed"
-
-file_paths <- lapply(
-    list.files(path = processed_data_dir, pattern = "\\.tif$", recursive = TRUE),
-    function(file_) file.path(processed_data_dir, file_)
+```{r}
+layers <- c(
+    "SLSRA_CP",
+    "SLSRA_HNV",
+    "SLSRA_NNR",
+    "SLSRA_NP",
+    "SLSRA_NR",
+    "SLSRA_RP",
+    "SLSRA_RSPB",
+    "SLSRA_SAC",
+    "SLSRA_SPA",
+    "SLSRA_SSSI",
+    "SLSRA_SWT",
+    "SLSRA_WLA"
 )
-file_stems <- lapply(
-    file_paths,
-    function(path) tools::file_path_sans_ext(basename(path))
-)
-files <- setNames(file_paths, file_stems)
+. <- lapply(layers, function(layer) {
+    plot(rast(stage_2_files[[layer]]), col = c("grey", "red"), main = layer)
+    lines(scotland, col = "black", lwd = 1)
+})
 
-files
+config |> filter((Component == "SLSRA") & (Dataset != "SLSRA_LCM")) |> 
+    select(Name, Description)
 ```
 
-```r
-files[[1]] |> rast() |> crop(aoi) |> plot()
-```

@@ -12,6 +12,7 @@ book:
     - stage_1.qmd
     - stage_2.qmd
     - buffer.qmd
+    - stage_3.qmd
 
 
 format:
