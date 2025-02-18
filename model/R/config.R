@@ -24,10 +24,10 @@ get_feature_mappings <- function(config) {
     # Group by layer, results in {layer_name : layer_config}
     config_by_layer <- split(config, as.factor(config[["Dataset"]]))
 
-    # Generate mapping {layer_name : {raster_value : feature_name}}
+    # Generate mapping {layer_name : {feature_name: raster_value}}
     mappings <- lapply(
         config_by_layer, function(layer_config) {
-            setNames(layer_config[["Name"]], layer_config[["Raster_Val"]])
+            setNames(as.numeric(layer_config[["Raster_Val"]]), layer_config[["Name"]])
         }
     )
     return(mappings)
