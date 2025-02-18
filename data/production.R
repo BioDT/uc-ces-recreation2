@@ -105,7 +105,7 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
     )
 }
 
-compute_buffer <- function(infile, outfile) {
+.compute_buffer <- function(infile, outfile) {
     raster <- terra::rast(infile)
 
     # TODO: remove crop and run somewhere with more memory
@@ -120,11 +120,31 @@ compute_buffer <- function(infile, outfile) {
     )
 }
 
+compute_buffer <- function(infile, outfile) {
+    raster <- terra::rast(infile)
+
+    # TODO: remove crop and run somewhere with more memory
+    raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
+
+    circle <- terra::focalMat(raster, d = 500, type = "circle", fillNA = TRUE)
+    circle[!is.na(circle)] <- 0
+
+    terra::focal(
+        raster,
+        w = circle,
+        fun = sum,
+        na.rm = TRUE, # ignore NA in `fun`
+        na.policy = "only", # only compute for NA cells - leave non-NA alone
+        silent = FALSE,
+        filename = outfile
+    )
+}
+
 compute_distance <- function(infile, outfile) {
     raster <- terra::rast(infile) # this is the buffer
     terra::distance(
         raster,
-        target = 1,
+        target = 0, # 1 for output of terra::buffer, 0 for output of focal
         exclude = NA,
         unit = "m",
         method = "haversine",
@@ -143,6 +163,38 @@ map_distance_to_unit <- function(infile, outfile) {
         fun = logistic_func,
         filename = outfile
         # NOTE: datatype inferred from raster - cannot be changed
+    )
+}
+
+
+gauss_blur <- function(infile, outfile) {
+    raster <- terra::rast(infile)
+
+    # TODO: remove crop and run somewhere with more memory
+    raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
+
+    gauss <- terra::focalMat(raster, d = 100, type = "Gauss")
+    raster <- terra::focal(
+        raster,
+        w = gauss,
+        fun = sum,
+        na.rm = TRUE,
+        na.policy = "all",
+        silent = FALSE,
+        filename = tempfile(fileext = ".tif"),
+        overwrite = TRUE
+    )
+
+    min_value <- min(terra::values(raster), na.rm = TRUE)
+    max_value <- max(terra::values(raster), na.rm = TRUE)
+    if (max_value == min_value) {
+        message(paste("The data could not be rescaled to the interval [0, 1], because the smallest and largest value are the same number", max_value)) # nolint
+    }
+
+    terra::app(
+        raster,
+        fun = function(x) (x - min_value) / (max_value - min_value),
+        filename = outfile
     )
 }
 
@@ -237,13 +289,32 @@ compute_distance_all <- function(indir, outdir) {
     }
 }
 
+.compute_distance_all <- function(indir, outdir) {
+    for (component in c("FIPS_I", "Water")) {
+        infile <- file.path(indir, paste0(component, ".tif"))
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+
+        message(paste("Computing distance:", infile, "->", outfile))
+        time(gauss_blur, infile, outfile)
+    }
+
+    for (component in c("SLSRA", "FIPS_N")) {
+        infile <- file.path(indir, component)
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+        message(paste("Creating symbolic link:", infile, "->", outfile))
+        file.symlink(infile, outfile)
+    }
+}
+
 # TODO: this doesn't seem to work - interactive() still seems to be TRUE
 # if loading using source(production.R)...
 if (!interactive()) {
     # reproject_all(indir = "Stage_0", outdir = "Stage_1")
     # one_hot_all(indir = "data/Stage_1", outdir = "data/Stage_2")
     # stack_all(indir = "data/Stage_2", outdir = "data/Stage_2")
-    # compute_distance_all(indir = "data/Stage_2", outdir = "data/Stage_3")
+    # compute_distance_all(indir = "data/Stage_2", outdir = "data/Stage_3b")
 } else {
     print("dogs!")
 }

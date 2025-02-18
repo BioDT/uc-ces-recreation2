@@ -34,3 +34,28 @@ stage_3_files[["FIPS_I_dist"]] |> rast() |> plot()
 stage_3_files[["FIPS_I"]] |> rast() |> plot()
 ```
 
+## Using focal
+
+```{r}
+files <- get_files("data/Stage_3b")
+files
+
+files[["FIPS_I_buf"]] |> rast() |> plot()
+files[["FIPS_I_dist"]] |> rast() |> plot()
+files[["FIPS_I"]] |> rast() |> plot()
+
+files[["Water_buf"]] |> rast() |> plot()
+files[["Water_dist"]] |> rast() |> plot()
+files[["Water"]] |> rast() |> plot()
+```
+
+## Gauss
+
+```{r}
+files <- get_files("data/Test_Stage_3")
+files
+
+files[["FIPS_I"]] |> rast() |> plot()
+
+files[["Water"]] |> rast() |> plot()
+```
