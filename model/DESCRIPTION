@@ -21,7 +21,7 @@ Depends:
 Imports:
     dplyr,
     readr,
-    terra
+    terra (>= 1.8.21)
 Suggests:
     bslib,
     devtools,
