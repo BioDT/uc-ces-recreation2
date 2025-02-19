@@ -205,9 +205,9 @@ ui <- fluidPage(
                     actionButton("saveButton", "Save Persona"),
                     tags$p(),
                     tabsetPanel(
-                        tabPanel("SLSRA", create_sliders("SLSRA")),
-                        tabPanel("FIPS_N", create_sliders("FIPS_N")),
-                        tabPanel("FIPS_I", create_sliders("FIPS_I")),
+                        tabPanel("Landscape", create_sliders("SLSRA")),
+                        tabPanel("Natural Features", create_sliders("FIPS_N")),
+                        tabPanel("Infrastructure", create_sliders("FIPS_I")),
                         tabPanel("Water", create_sliders("Water"))
                     )
                 ),
@@ -219,9 +219,9 @@ ui <- fluidPage(
                         "layerSelect",
                         "Select which component to display on the map",
                         choices = list(
-                            "SLSRA" = 1,
-                            "FIPS_N" = 2,
-                            "FIPS_I" = 3,
+                            "Landscape" = 1,
+                            "Natural Features" = 2,
+                            "Infrastructure" = 3,
                             "Water" = 4,
                             "Recreational Potential" = 5
                         ),
@@ -293,7 +293,8 @@ ui <- fluidPage(
         column(
             width = 6,
             style = "text-align: left;",
-            "Information about how we process your data can be found in our ", tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice.", target = "_blank"),
+            "Information about how we process your data can be found in our ",
+            tags$a(href = "https://www.ceh.ac.uk/privacy-notice", "privacy notice.", target = "_blank"),
             tags$br(),
             "Contact: Dr Jan Dick (jand@ceh.ac.uk)."
         ),
@@ -378,10 +379,8 @@ server <- function(input, output, session) {
         return(persona)
     }
 
-    # Reactive variable to track the csv file that's been selected for loading
-    reactiveLoadFile <- reactiveVal()
-
-    reactivePersonaList <- reactiveVal()
+    # Reactive variable to track the selected user
+    reactiveUserSelect <- reactiveVal("examples")
 
     # Reactive variable for caching computed raster
     reactiveLayers <- reactiveVal()
@@ -389,6 +388,7 @@ server <- function(input, output, session) {
     # Reactive variable for coordinates of user-drawn bbox
     reactiveExtent <- reactiveVal()
 
+    # Reactive variable for displaying info to user
     userInfoText <- reactiveVal("")
 
     output$userInfo <- renderText({
@@ -410,28 +410,31 @@ server <- function(input, output, session) {
     # ------------------------------------------------------ Loading
 
     observeEvent(input$loadButton, {
-        updateSelectInput(session, "loadUserSelect", choices = list_users(), selected = reactiveLoadFile())
-        showModal(load_dialog)
-    })
-
-    observeEvent(input$loadUserSelect, {
-        req(input$loadUserSelect)
-        reactiveLoadFile(paste0(input$loadUserSelect, ".csv"))
-    })
-    observeEvent(reactiveLoadFile(), {
-        reactivePersonaList(list_personas_in_file(reactiveLoadFile()))
-    })
-    observeEvent(reactivePersonaList(), {
+        updateSelectInput(
+            session,
+            "loadUserSelect",
+            choices = list_users(),
+            selected = reactiveUserSelect()
+        )
         updateSelectInput(
             session,
             "loadPersonaSelect",
-            choices = reactivePersonaList()
+            choices = list_personas_in_file(paste0(reactiveUserSelect(), ".csv"))
+        )
+        showModal(load_dialog)
+    })
+    observeEvent(input$loadUserSelect, {
+        req(input$loadUserSelect)
+        reactiveUserSelect(input$loadUserSelect)
+        updateSelectInput(
+            session,
+            "loadPersonaSelect",
+            choices = list_personas_in_file(paste0(reactiveUserSelect(), ".csv"))
         )
     })
-
     observeEvent(input$confirmLoad, {
         loaded_persona <- model::load_persona(
-            file.path(.persona_dir, reactiveLoadFile()),
+            file.path(.persona_dir, paste0(reactiveUserSelect(), ".csv")),
             input$loadPersonaSelect
         )
         # Apply new persona to sliders
@@ -443,7 +446,7 @@ server <- function(input, output, session) {
             )
         })
 
-        update_user_info(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))
+        update_user_info(paste0("Loaded persona '", input$loadPersonaSelect, "' from user '", input$loadUserSelect, "'"))  # nolint
 
         removeModal()
     })
@@ -466,8 +469,8 @@ server <- function(input, output, session) {
             return()
         }
 
-        result <- file.copy(input$fileUpload$datapath, save_path, overwrite = FALSE)
-        
+        file.copy(input$fileUpload$datapath, save_path, overwrite = FALSE)
+
         updateSelectInput(session, "loadUserSelect", choices = list_users(), selected = user_name)
         updateSelectInput(session, "downloadUserSelect", choices = list_users(), selected = user_name)
 
@@ -476,8 +479,18 @@ server <- function(input, output, session) {
     # ------------------------------------------------------ Saving
 
     observeEvent(input$saveButton, {
-        updateSelectInput(session, "saveUserSelect", choices = list_users(), selected = reactiveLoadFile())
-        updateSelectInput(session, "downloadUserSelect", choices = list_users(), selected = reactiveLoadFile())
+        updateSelectInput(
+            session,
+            "saveUserSelect",
+            choices = list_users(),
+            selected = reactiveUserSelect()
+        )
+        updateSelectInput(
+            session,
+            "downloadUserSelect",
+            choices = list_users(),
+            selected = reactiveUserSelect()
+        )
         showModal(save_dialog)
     })
     observeEvent(input$confirmSave, {
@@ -574,7 +587,7 @@ server <- function(input, output, session) {
         if (input$minDisplay > 0) {
             curr_layer <- terra::ifel(curr_layer > input$minDisplay, curr_layer, NA)
         }
-        
+
         if (all(is.na(terra::values(curr_layer)))) {
             update_user_info("There are no numeric values in this data. Nothing will be displayed.")
         }
@@ -687,7 +700,7 @@ server <- function(input, output, session) {
     observeEvent(input$opacity, {
         update_map()
     })
-    
+
     # Update map using cached values when lower threshold changes
     observeEvent(input$minDisplay, {
         update_map()
