@@ -18,26 +18,28 @@ compute_potential <- function(persona, raster_dir, bbox = NULL) {
 
     slsra <- file.path(raster_dir, "SLSRA.tif") |>
         load_raster(bbox) |>
-        compute_component(persona)
+        compute_component(persona) |>
+        rescale_to_unit_interval()
 
     fips_n <- file.path(raster_dir, "FIPS_N.tif") |>
         load_raster(bbox) |>
-        compute_component(persona)
+        compute_component(persona) |>
+        rescale_to_unit_interval()
 
     fips_i <- file.path(raster_dir, "FIPS_I.tif") |>
         load_raster(bbox) |>
-        compute_component(persona)
+        compute_component(persona) |>
+        rescale_to_unit_interval()
 
     water <- file.path(raster_dir, "Water.tif") |>
         load_raster(bbox) |>
-        compute_component(persona)
+        compute_component(persona) |>
+        rescale_to_unit_interval()
 
-    total <- slsra + fips_n + fips_i + water
+    total <- rescale_to_unit_interval(slsra + fips_n + fips_i + water)
 
     layers <- c(slsra, fips_n, fips_i, water, total)
     names(layers) <- c("SLSRA", "FIPS_N", "FIPS_I", "Water", "Recreational_Potential")
-
-    layers <- terra::sapp(layers, rescale_to_unit_interval)
 
     return(layers)
 }
