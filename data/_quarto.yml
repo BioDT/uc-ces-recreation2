@@ -13,7 +13,7 @@ book:
     - stage_2.qmd
     - buffer.qmd
     - focal.qmd
-#    - stage_3.qmd
+    - stage_3.qmd
 
 
 format:

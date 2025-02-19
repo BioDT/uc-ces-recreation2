@@ -105,11 +105,13 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
     )
 }
 
+# Useless because `terra::buffer` calls the same `proximity` function as
+# `terra::distance`
 .compute_buffer <- function(infile, outfile) {
     raster <- terra::rast(infile)
 
     # TODO: remove crop and run somewhere with more memory
-    raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
+    # raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
 
     terra::buffer(
         raster,
@@ -120,6 +122,10 @@ one_hot_layer <- function(infile, outfile, feature_mapping) {
     )
 }
 
+# A far less efficient way of computing the same buffer as above
+# (well, 0 and 1 are inverted)
+# But it has lower peak memory requirements since it is based on an operation
+# over a window of finite extent
 compute_buffer <- function(infile, outfile) {
     raster <- terra::rast(infile)
 
@@ -140,11 +146,29 @@ compute_buffer <- function(infile, outfile) {
     )
 }
 
+# Straight up application of `terra::distance` to the raster (no buffer)
 compute_distance <- function(infile, outfile) {
-    raster <- terra::rast(infile) # this is the buffer
+    raster <- terra::rast(infile)
+    # TODO: remove crop and run somewhere with more memory
+    raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
     terra::distance(
         raster,
-        target = 0, # 1 for output of terra::buffer, 0 for output of focal
+        target = NA, # targets everything excluding the features (v expensive!)
+        unit = "m",
+        method = "haversine",
+        filename = outfile,
+        datatype = "FLT4S"
+    )
+}
+
+# `buffer` is a raster with values {0, 1, NA}
+# Whether 1 corresponds to the feature or the buffer region depends on whether
+# the buffer was computed using `terra::buffer` or `terra::focal`.
+compute_distance_in_buffer <- function(infile, outfile) {
+    buffer <- terra::rast(infile)
+    terra::distance(
+        buffer,
+        target = 0, # NOTE: 1 for output of terra::buffer, 0 for output of terra::focal
         exclude = NA,
         unit = "m",
         method = "haversine",
@@ -268,19 +292,15 @@ stack_all <- function(indir, outdir) {
     }
 }
 
-compute_distance_all <- function(indir, outdir) {
+compute_distance_fast <- function(indir, outdir) {
     for (component in c("FIPS_I", "Water")) {
         infile <- file.path(indir, paste0(component, ".tif"))
-        buf_file <- file.path(outdir, paste0(component, "_buf.tif"))
         dist_file <- file.path(outdir, paste0(component, "_dist.tif"))
         outfile <- file.path(outdir, paste0(component, ".tif"))
         dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
-        message(paste("Computing buffer:", infile, "->", buf_file))
-        time(compute_buffer, infile, buf_file)
-
-        message(paste("Performing distance calculation:", buf_file, "->", dist_file))
-        time(compute_distance, buf_file, dist_file)
+        message(paste("Performing distance calculation:", infile, "->", dist_file))
+        time(compute_distance, infile, dist_file)
 
         message(paste("Mapping distance to unit interval:", dist_file, "->", outfile))
         time(map_distance_to_unit, dist_file, outfile)
@@ -295,13 +315,41 @@ compute_distance_all <- function(indir, outdir) {
     }
 }
 
-.compute_distance_all <- function(indir, outdir) {
+compute_distance_slow <- function(indir, outdir) {
+    for (component in c("FIPS_I", "Water")) {
+        infile <- file.path(indir, paste0(component, ".tif"))
+        buf_file <- file.path(outdir, paste0(component, "_buf.tif"))
+        dist_file <- file.path(outdir, paste0(component, "_dist.tif"))
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+
+        message(paste("Computing buffer:", infile, "->", buf_file))
+        time(compute_buffer, infile, buf_file)
+
+        message(paste("Performing distance calculation:", buf_file, "->", dist_file))
+        time(compute_distance_in_buffer, buf_file, dist_file)
+
+        message(paste("Mapping distance to unit interval:", dist_file, "->", outfile))
+        time(map_distance_to_unit, dist_file, outfile)
+    }
+
+    for (component in c("SLSRA", "FIPS_N")) {
+        infile <- file.path(indir, component)
+        outfile <- file.path(outdir, paste0(component, ".tif"))
+        dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
+        message(paste("Creating symbolic link:", infile, "->", outfile))
+        file.symlink(infile, outfile)
+    }
+}
+
+# NOTE: nothing to do with distance. Misnomer. Fix
+compute_distance_gauss <- function(indir, outdir) {
     for (component in c("FIPS_I", "Water")) {
         infile <- file.path(indir, paste0(component, ".tif"))
         outfile <- file.path(outdir, paste0(component, ".tif"))
         dir.create(dirname(outfile), recursive = TRUE, showWarnings = FALSE)
 
-        message(paste("Computing distance:", infile, "->", outfile))
+        message(paste("Applying Gaussian kernel:", infile, "->", outfile))
         time(gauss_blur, infile, outfile)
     }
 
@@ -319,8 +367,8 @@ compute_distance_all <- function(indir, outdir) {
 if (!interactive()) {
     # reproject_all(indir = "Stage_0", outdir = "Stage_1")
     # one_hot_all(indir = "data/Stage_1", outdir = "data/Stage_2")
-    stack_all(indir = "data/Stage_2", outdir = "data/Stage_2")
-    # compute_distance_all(indir = "data/Stage_2", outdir = "data/Stage_3")
+    # stack_all(indir = "data/Stage_2", outdir = "data/Stage_2")
+    #compute_distance_fast(indir = "data/Stage_2", outdir = "data/Stage_3")
 } else {
     print("dogs!")
 }

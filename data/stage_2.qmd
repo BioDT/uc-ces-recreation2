@@ -145,6 +145,14 @@ names(rast("smee.tif"))
 ## Check the fixed outputs
 
 ```{r}
+rast("data/Stage_2/FIPS_I.tif") |> crop(bush) |> plot(col = c("black", "red"))
+
+config |> filter(Component == "FIPS_I") |> 
+    select(Name, Description)
+
+```
+
+```r
 files <- get_files("data/Stage_2")
 
 layer <- rast(files[["FIPS_I_RoadsTracks"]])[["FIPS_I_RoadsTracks_4"]]
@@ -164,7 +172,7 @@ Great so this did not work!
 Test:
 Remember that `FIPS_I_RoadsTracks_1` should be motorways!
 
-```{r}
+```r
 test <- rast(lapply(get_files("data/Stage_2/FIPS_I"), rast))
 test
 layer <- test[["FIPS_I_RoadsTracks_1"]]
@@ -174,7 +182,7 @@ layer |> crop(bush) |> plet()
 
 Test 2: `c` is supposed to take multiple arguments, not a list of arguments, hence why this doesn't work and we should continue to use `rast`.
 
-```{r}
+```r
 test <- c(lapply(get_files("data/Stage_2/FIPS_I"), rast))
 test
 layer <- test[["FIPS_I_RoadsTracks_1"]]
@@ -182,7 +190,7 @@ layer
 ```
 
 Test 3: explicitly set names
-```{r}
+```r
 rasters <- lapply(get_files("data/Stage_2/FIPS_I"), rast)
 layer_names <- unlist(lapply(rasters, names))
 layer_names

@@ -10,7 +10,6 @@ source("production.R")
 config <- load_config()
 feature_mappings <- get_feature_mappings(config)
 
-stage_3_files <- get_files("data/Stage_3")
 
 bush <- vect("data/Shapefiles/Bush/Bush.shp")
 cairngorms <- vect("data/Legacy/Legacy_Data/input/Raw_Shapefile/CairngormNP/CairngormNP.shp")
@@ -21,13 +20,14 @@ scotland <- vect("data/Scotland/boundaries.shp")
 ## Check things makes sense
 
 ```{r}
-rast("data/Stage_2/FIPS_I.tif") |> crop(bush) |> plot()
+rast("data/Stage_2/FIPS_I.tif") |> crop(bush) |> plot(col = c("black", "red"))
 ```
 
 ```{r}
+stage_3_files <- get_files("data/Stage_3")
 stage_3_files
 
-stage_3_files[["FIPS_I_buf"]] |> rast() |> plot()
+#stage_3_files[["FIPS_I_buf"]] |> rast() |> plot()
 
 stage_3_files[["FIPS_I_dist"]] |> rast() |> plot()
 
@@ -36,7 +36,7 @@ stage_3_files[["FIPS_I"]] |> rast() |> plot()
 
 ## Using focal
 
-```{r}
+```r
 files <- get_files("data/Stage_3b")
 files
 
@@ -51,7 +51,7 @@ files[["Water"]] |> rast() |> plot()
 
 ## Gauss
 
-```{r}
+```r
 files <- get_files("data/Test_Stage_3")
 files
 
