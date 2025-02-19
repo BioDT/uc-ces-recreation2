@@ -10,7 +10,7 @@ about_html <- tags$div(
     "The 87 items are grouped into four", tags$em("components"),
     tags$p(),
     tags$ul(
-        tags$li(tags$strong("Land Type:"), "The suitability of land to support recreational activity (SLSRA)."),
+        tags$li(tags$strong("Landscape:"), "The suitability of land to support recreational activity (SLSRA)."),
         tags$li(tags$strong("Natural Features"), "influencing the potential (FIPS_N)"),
         tags$li(tags$strong("Infrastructure"), "features influencing the potential (FIPS_I)"),
         tags$li(tags$strong("Water:"), "Rivers and lakes")
@@ -33,7 +33,7 @@ persona_html <- tags$div(
     "The 'Persona' tab contains everything you need to create, load, edit and save personas.",
     tags$p(),
     tags$h4("Creating a persona"),
-    "Each of the nested tabs ('Land Type', 'Natural Features', 'Infrastructure', 'Water') contains a number of sliders, which are used for scoring the items.",
+    "Each of the nested tabs ('Landscape', 'Natural Features', 'Infrastructure', 'Water') contains a number of sliders, which are used for scoring the items.",
     tags$p(),
     "You will need to decide on a score, between 0 (of no importance) and 10 (of the highest importance), for each of the 87 items, according to the value of that item from your personal perspective.",
     "If, from the viewpoint of your persona, you do not feel that an item is relevant to the recreational potential, you should give it a score of 0.",

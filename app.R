@@ -205,7 +205,7 @@ ui <- fluidPage(
                     actionButton("saveButton", "Save Persona"),
                     tags$p(),
                     tabsetPanel(
-                        tabPanel("Land Type", create_sliders("SLSRA")),
+                        tabPanel("Landscape", create_sliders("SLSRA")),
                         tabPanel("Natural Features", create_sliders("FIPS_N")),
                         tabPanel("Infrastructure", create_sliders("FIPS_I")),
                         tabPanel("Water", create_sliders("Water"))
@@ -219,7 +219,7 @@ ui <- fluidPage(
                         "layerSelect",
                         "Select which component to display on the map",
                         choices = list(
-                            "Land Type" = 1,
+                            "Landscape" = 1,
                             "Natural Features" = 2,
                             "Infrastructure" = 3,
                             "Water" = 4,
