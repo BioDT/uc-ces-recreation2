@@ -119,11 +119,61 @@ viz_html <- tags$div(
 faq_html <- tags$div(
     tags$p(),
     tags$h3("Frequently Asked Questions"),
-    "If you cannot find the answer to your question here, please reach out to Dr Jan Dick at jand@ceh.ac.uk.",
-    tags$h4("What data does this model use?"),
-    "to do",
-    tags$h4("How are the values rescaled?"),
-    "Note that a value of one (zero) represents the highest (lowest) Recreational Potential", tags$em("within the chosen area"), "and not the highest (lowest) value anywhere in Scotland.",
-    tags$h4("Where can I find academic literature on this model?"),
-    "to do"
+    tags$p(
+        "If you cannot find the answer to your question here, please reach out to",
+        " ", tags$a(href = "mailto:jand@ceh.ac.uk", "Dr Jan Dick at jand@ceh.ac.uk"), "."
+    ),
+    tags$h4("1.	Where can I find more information about the project?"),
+    tags$p(
+        "The recreation potential model is part of the BioDT project. More information on this project can be found",
+        " ", tags$a(href = "https://biodt.eu", target = "_blank", "here"), " ",
+        "and on our specific case study",
+        " ", tags$a(href = "https://biodt.eu/use-cases/ecosystem-services", target = "_blank", "here"), "."
+    ),
+    tags$h4("2.	What is a Digital twin?"),
+    tags$p(
+        "A digital twin is a virtual representation of real-world entities and processes, synchronized at a specified frequency and fidelity.",
+        tags$br(),
+        "You can learn more",
+        " ", tags$a(href = "https://biodt.eu/DigitalTwin", target = "_blank", "here"), "."
+    ),
+    tags$h4("3. Where can I find academic literature on this model?"),
+    tags$p(
+        "Rolph S, Andrews C, Carbone D, Lopez Gordillo J, Martinovič T, Oostervink N, Pleiter D, Sara-aho K, Watkins J, Wohner C, Bolton W, Dick J (2024) Prototype Digital Twin: Recreation and biodiversity cultural ecosystem services. Research Ideas and Outcomes 10: e125450.",
+        " ", tags$a(href = "https://doi.org/10.3897/rio.10.e125450", target = "_blank", "doi.org/10.3897/rio.10.e125450")
+    ),
+    tags$h4("4.	What data does this model use?"),
+    tags$p(
+        "The recreation potential (RP) model uses external data sources capturing information about the physical (natural and built) environment.  It is divided into four categories:",
+        tags$br(),
+        tags$strong("Landscape"), ": This includes datasets on land cover type, landscape designations and conservation, and farmland of high nature value. (Previously called 'SLSRA')",
+        tags$br(),
+        tags$strong("Infrastructure"), ": This includes datasets on road and track, footpaths and cycle networks. (Previously 'FIPS_I')",
+        tags$br(),
+        tags$strong("Natural Features"), ": This includes datasets on landform types, soil types and slope. (Previously 'FIPS_N')",
+        tags$br(),
+        tags$strong("Water"), ": Hydrological features influencing the potential provision.  This includes datasets on rivers and lakes."
+    ),
+    tags$h4("5. How are the values rescaled?"),
+    tags$p("Each component is first rescaled to a range of 0-1. The four components are then added and rescaled once again to produce the Recreational Potential value. This rescaling is specific to the persona and area chosen. Therefore a value of 1 represents the highest value in the chosen area, given the persona, and not the highest value possible for any persona or in a any part of Scotland."),
+    tags$h4("6. Why did you select 87 variables to parameterise the recreational potential model?"),
+    tags$p(
+        "We read the literature on what aspects of nature people found attractive and attempted to find free (open source) national or international datasets which we could use to characterise Scotland.  We grouped some of the features like slope, into categories.",
+        tags$br(),
+        "We are aware that people find many aspects of nature important e.g. smell, touch, sound but these are not easy to characterise, and no national datasets are readily available."
+    ),
+    tags$h4("7.	Why does this model not include the biodiversity?"),
+    tags$p(
+        "We have not yet been able to provide the biodiversity data for the whole of Scotland but you can see the combined models",
+        " ", tags$a(href = "https://app.biodt.eu/app/biodtshiny", target = "_blank", "here"), " ",
+        "and follow the linked to the Cultural Ecosystem Service use case"
+    ),
+    tags$h4("8.	Where do you get the species location data from?"),
+    tags$p(
+        "We use data provided by citizen science projects. We use the data from GBIF—",
+        tags$a(href = "https://www.gbif.org/", target = "_blank", "the Global Biodiversity Information Facility"), ".",
+        "It is an international network and data infrastructure funded by the world's governments and aimed at providing anyone, anywhere, open access to data about all types of life on Earth."
+    ),
+    tags$h4("9.	How did you model the distribution of species for the Cairngorms?"),
+    tags$p("We fitted a Species Distribution Models (SDMs) using citizen scientise records of species occurrence obtained from GBIF as response variables and bioclimatic variables available on Google's Earth Engine Data Catalog as explanatory variables.")
 )
