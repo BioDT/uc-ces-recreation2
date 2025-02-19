@@ -93,7 +93,7 @@ test <- rast(stage_2_files[["FIPS_I_RoadsTracks"]]) |> crop(bush)
 names(test)
 
 
-test2 <- rast("data/Stage_3/FIPS_I.tif")
+test2 <- rast("data/Stage_2/FIPS_I.tif")
 names(test2)
 ```
 
@@ -101,7 +101,7 @@ names(test2)
 test <- rast(stage_2_files[["Water_Rivers"]])
 names(test)
 
-test2 <- rast("data/Stage_3/Water.tif")
+test2 <- rast("data/Stage_2/Water.tif")
 names(test2)
 
 ```
@@ -142,9 +142,70 @@ names(smee)
 names(rast("smee.tif"))
 ```
 
-## Check the designated areas
+## Check the fixed outputs
 
 ```{r}
+files <- get_files("data/Stage_2")
+
+layer <- rast(files[["FIPS_I_RoadsTracks"]])[["FIPS_I_RoadsTracks_4"]]
+layer |> crop(bush) |> plot()
+layer |> crop(bush) |> plet()
+
+config |> filter(Dataset == "FIPS_I_RoadsTracks") |> 
+    select(Name, Description)
+
+layer <- rast(files[["FIPS_I"]])[["FIPS_I_RoadsTracks_1"]]
+layer |> crop(bush) |> plot()
+layer |> crop(bush) |> plet()
+```
+
+Great so this did not work!
+
+Test:
+Remember that `FIPS_I_RoadsTracks_1` should be motorways!
+
+```{r}
+test <- rast(lapply(get_files("data/Stage_2/FIPS_I"), rast))
+test
+layer <- test[["FIPS_I_RoadsTracks_1"]]
+layer |> crop(bush) |> plot()
+layer |> crop(bush) |> plet()
+```
+
+Test 2: `c` is supposed to take multiple arguments, not a list of arguments, hence why this doesn't work and we should continue to use `rast`.
+
+```{r}
+test <- c(lapply(get_files("data/Stage_2/FIPS_I"), rast))
+test
+layer <- test[["FIPS_I_RoadsTracks_1"]]
+layer
+```
+
+Test 3: explicitly set names
+```{r}
+rasters <- lapply(get_files("data/Stage_2/FIPS_I"), rast)
+layer_names <- unlist(lapply(rasters, names))
+layer_names
+
+test <- rast(rasters)
+# NOTE: names argument in rast does not work for lists of rasters -.-
+names(test) <- layer_names
+
+layer <- test[["FIPS_I_RoadsTracks_4"]]
+
+layer
+
+layer |> crop(bush) |> plot()
+layer |> crop(bush) |> plet()
+
+config |> filter(Dataset == "FIPS_I_RoadsTracks") |> 
+    select(Name, Description)
+```
+
+
+## Check the designated areas
+
+```r
 layers <- c(
     "SLSRA_CP",
     "SLSRA_HNV",

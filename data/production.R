@@ -124,7 +124,7 @@ compute_buffer <- function(infile, outfile) {
     raster <- terra::rast(infile)
 
     # TODO: remove crop and run somewhere with more memory
-    raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
+    # raster <- terra::crop(raster, terra::vect("data/Shapefiles/Bush/Bush.shp"))
 
     circle <- terra::focalMat(raster, d = 500, type = "circle", fillNA = TRUE)
     circle[!is.na(circle)] <- 0
@@ -256,9 +256,15 @@ stack_all <- function(indir, outdir) {
 
         message(paste("Stacking", component, "into a single raster:", indir, "->", outfile))
 
-        stacked <- terra::rast(lapply(infiles, terra::rast))
+        rasters <- lapply(infiles, terra::rast)
+        stacked <- terra::rast(rasters)
 
-        terra::writeRaster(stacked, outfile, datatype = "INT1U", overwrite = TRUE)
+        # NOTE: rast(list_of_rasters) does not seem to preserve layer names!
+        # Need to manually reapply them here (which assumes order is preserved)
+        layer_names <- unlist(lapply(rasters, names))
+        names(stacked) <- layer_names
+
+        terra::writeRaster(stacked, outfile, overwrite = TRUE)
     }
 }
 
@@ -313,8 +319,8 @@ compute_distance_all <- function(indir, outdir) {
 if (!interactive()) {
     # reproject_all(indir = "Stage_0", outdir = "Stage_1")
     # one_hot_all(indir = "data/Stage_1", outdir = "data/Stage_2")
-    # stack_all(indir = "data/Stage_2", outdir = "data/Stage_2")
-    # compute_distance_all(indir = "data/Stage_2", outdir = "data/Stage_3b")
+    stack_all(indir = "data/Stage_2", outdir = "data/Stage_2")
+    # compute_distance_all(indir = "data/Stage_2", outdir = "data/Stage_3")
 } else {
     print("dogs!")
 }
