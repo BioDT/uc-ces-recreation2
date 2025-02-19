@@ -146,11 +146,11 @@ faq_html <- tags$div(
     tags$p(
         "The recreation potential (RP) model uses external data sources capturing information about the physical (natural and built) environment.  It is divided into four categories:",
         tags$br(),
-        tags$strong("SLSRA"), ": Suitability of land to support recreation activities.  This includes datasets on land cover type, landscape designations and conservation, and farmland of high nature value.",
+        tags$strong("Landscape"), ": This includes datasets on land cover type, landscape designations and conservation, and farmland of high nature value. (Previously called 'SLSRA')",
         tags$br(),
-        tags$strong("FIPS_I"), ": Infrastructure features influencing the potential provision. This includes datasets on road and track, footpaths and cycle networks.",
+        tags$strong("Infrastructure"), ": This includes datasets on road and track, footpaths and cycle networks. (Previously 'FIPS_I')",
         tags$br(),
-        tags$strong("FIPS_N"), ": Natural features influencing the potential provision.  This includes datasets on landform types, soil types and slope.",
+        tags$strong("Natural Features"), ": This includes datasets on landform types, soil types and slope. (Previously 'FIPS_N')",
         tags$br(),
         tags$strong("Water"), ": Hydrological features influencing the potential provision.  This includes datasets on rivers and lakes."
     ),
