@@ -58,13 +58,7 @@ read_persona_csv <- function(csv_path) {
         stop("Error: the file does not contain an index column")
     }
 
-    # Recast the "index" column as the index
-    # Note we need to convert from tibble to data.frame
-    df <- as.data.frame(df)
-    rownames(df) <- df[["index"]]
-    df[["index"]] <- NULL
-
-    if (!ncol(df) > 0) {
+    if (!ncol(df) > 1) {
         stop("Error: the file does not contain any personas")
     }
 
@@ -88,21 +82,21 @@ load_persona <- function(csv_path, name = NULL) {
 
     df <- read_persona_csv(csv_path)
 
+    stopifnot(names(df)[1] == "index")
+
     if (is.null(name)) {
-        if (ncol(df) > 1) {
+        if (ncol(df) > 2) {
             stop("Error: A name is required when the persona file contains >1 persona")
         }
-        # There is only one persona in the file
-        persona_df <- df
+        # There is only one persona in the file (after index)
+        scores <- df[[2]]
     } else {
         # Select the column with the provided name
-        persona_df <- df[, name, drop = FALSE]
+        scores <- df[[name]]
     }
 
-    stopifnot(ncol(persona_df) == 1)
-
     # Convert to named vector
-    persona <- setNames(persona_df[[1]], rownames(persona_df))
+    persona <- setNames(scores, df[["index"]])
 
     .assert_valid_persona(persona)
 
@@ -115,7 +109,7 @@ load_persona <- function(csv_path, name = NULL) {
 #' will be appended as a new column, unless the provided name matches an existing
 #' column, in which case it will overwrite the existing data.
 #'
-#' @param persona `integer` A vector of integers representing the persona
+#' @param persona `integer` A named vector of integers representing the persona
 #' @param csv_path `character` Path to write a csv file, which may already exist
 #' @param name `character` Name of the persona
 #'
@@ -125,49 +119,37 @@ save_persona <- function(persona, csv_path, name, overwrite = FALSE) {
         message("Cannot name the persona 'index'. Persona not saved")
         return()
     }
-    # message(paste0("Saving persona to file '", csv_path, "' with name '", name, "'"))
+    # TODO: add messages here, without polluting printed user info in shiny app
     .assert_valid_persona(persona)
 
-    # Create a dataframe with 'index' and 'name'
-    df <- data.frame(index = names(persona))
-    df[[name]] <- persona
-
+    # If file exists, we need to append the new persona carefully, making
+    # sure the row names of the new persona are aligned with the 'index'
+    # column of the dataframe
     if (file.exists(csv_path)) {
-        # message(paste0("File '", csv_path, "' already exists. The persona will be appended."))
-
-        # We need to merge the two dataframes carefully, using the named rows
-
-        # This currently has 'rownames' but no 'index' column
-        df_a <- read_persona_csv(csv_path)
-
-        # We need to set rownames to align the two during the merge
-        df_b <- df
-        rownames(df_b) <- df_b[["index"]]
-
-        # Delete the 'index' column since we cannot guarantee ordering after merge
-        # so we need to re-create it from the merged dataframes rownames
-        df_b[["index"]] <- NULL
+        df <- read_persona_csv(csv_path)
 
         # Check if we are overwriting an existing persona and delete the column if so
         # since otherwise we end up with `name1` and `name2` or something like that
-        if (name %in% colnames(df_a)) {
+        if (name %in% colnames(df)) {
             message(paste0("A persona with name '", name, "' already exists"))
             if (overwrite) {
                 message("This will be overwritten with the new persona")
-                df_a[[name]] <- NULL
+                df[[name]] <- NULL
             } else {
                 message("Cannot overwrite existing persona. Please choose a different name")
                 return()
             }
         }
 
-        # Finally, merge the two dataframes
-        df <- cbind(df_a, df_b)
+        # Reorder persona to align it with the `index` column, then add
+        # the reordered list to the data.frame as a new column
+        df[[name]] <- persona[df[["index"]]]
 
-        # Order by index and restore explicit index column at position 1
-        df <- df[order(rownames(df)), , drop = FALSE]
-        df[["index"]] <- rownames(df)
-        df <- df[, c("index", setdiff(colnames(df), "index"))]
+    } else {
+        # If file does *not* exist, simply crete a dataframe with two columns,
+        # 'index' and '<name>'
+        df <- data.frame(index = names(persona))
+        df[[name]] <- persona
     }
 
     readr::write_csv(df, csv_path)
