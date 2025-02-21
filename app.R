@@ -320,12 +320,12 @@ load_dialog <- modalDialog(
         selected = NULL
     ),
     actionButton("confirmLoad", "Load"),
-    hr(),
-    fileInput(
-        "fileUpload",
-        "Upload a persona file",
-        accept = c(".csv")
-    ),
+    #hr(),
+    #fileInput(
+    #    "fileUpload",
+    #    "Upload a persona file",
+    #    accept = c(".csv")
+    #),
     footer = tagList(
         modalButton("Cancel"),
     )
