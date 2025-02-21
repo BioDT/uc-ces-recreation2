@@ -470,7 +470,19 @@ server <- function(input, output, session) {
 
         file.copy(input$fileUpload$datapath, save_path, overwrite = FALSE)
 
+        # Refresh the options displayed in the select user/persona dialog
         reactiveUserSelect(user_name)
+        updateSelectInput(
+            session,
+            "loadUserSelect",
+            choices = list_users(),
+            selected = reactiveUserSelect()
+        )
+        updateSelectInput(
+            session,
+            "loadPersonaSelect",
+            choices = list_personas_in_file(paste0(reactiveUserSelect(), ".csv"))
+        )
     })
 
     # ------------------------------------------------------ Saving
