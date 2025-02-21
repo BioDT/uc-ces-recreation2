@@ -17,7 +17,6 @@ source("shiny_app/theme.R")  # contains custom_theme, custom_titlePanel
 
 .raster_dir <- "shiny_app/data"
 .persona_dir <- "shiny_app/personas"
-.example_persona_csv <- file.path(.persona_dir, "examples.csv")
 .boundary_shp <- file.path("shiny_app", "data", "Scotland", "boundaries.shp")
 .config <- load_config()
 .layer_info <- setNames(.config[["Description"]], .config[["Name"]])
@@ -312,7 +311,7 @@ load_dialog <- modalDialog(
         "loadUserSelect",
         "Select user",
         choices = list_users(),
-        selected = "examples"
+        selected = NULL
     ),
     selectInput(
         "loadPersonaSelect",
@@ -424,7 +423,6 @@ server <- function(input, output, session) {
         showModal(load_dialog)
     })
     observeEvent(input$loadUserSelect, {
-        req(input$loadUserSelect)
         reactiveUserSelect(input$loadUserSelect)
         updateSelectInput(
             session,
@@ -433,6 +431,9 @@ server <- function(input, output, session) {
         )
     })
     observeEvent(input$confirmLoad, {
+        req(reactiveUserSelect())
+        req(input$loadPersonaSelect)
+
         loaded_persona <- model::load_persona(
             file.path(.persona_dir, paste0(reactiveUserSelect(), ".csv")),
             input$loadPersonaSelect
@@ -451,8 +452,6 @@ server <- function(input, output, session) {
         removeModal()
     })
     observeEvent(input$fileUpload, {
-        if (is.null(input$fileUpload)) return()
-
         tryCatch({
             . <- model::read_persona_csv(input$fileUpload$datapath)  # nolint
         }, error = function(e) {
@@ -471,9 +470,7 @@ server <- function(input, output, session) {
 
         file.copy(input$fileUpload$datapath, save_path, overwrite = FALSE)
 
-        updateSelectInput(session, "loadUserSelect", choices = list_users(), selected = user_name)
-        updateSelectInput(session, "downloadUserSelect", choices = list_users(), selected = user_name)
-
+        reactiveUserSelect(user_name)
     })
 
     # ------------------------------------------------------ Saving
@@ -482,24 +479,34 @@ server <- function(input, output, session) {
         updateSelectInput(
             session,
             "saveUserSelect",
-            choices = list_users(),
-            selected = reactiveUserSelect()
+            choices = c("", list_users()),
+            selected = ""
         )
         updateSelectInput(
             session,
             "downloadUserSelect",
-            choices = list_users(),
-            selected = reactiveUserSelect()
+            choices = c("", list_users()),
+            selected = ""
         )
         showModal(save_dialog)
     })
     observeEvent(input$confirmSave, {
+        req(input$savePersonaName)
+        req(nzchar(input$saveUserSelect) || nzchar(input$saveUserName))
+
         user_name <- if (input$saveUserName != "") input$saveUserName else input$saveUserSelect
         persona_name <- input$savePersonaName
 
         # Remove characters that may cause problems with i/o and dataframe filtering
         user_name <- remove_non_alphanumeric(user_name)
         persona_name <- remove_non_alphanumeric(persona_name)
+
+        if (user_name == "examples") {
+            # TODO: display message inside modal, so it's visible
+            message <- "Cannot save personas to 'examples'. Please choose a different user name"
+            update_user_info(message)
+            return()
+        }
 
         message <- paste0("Saving persona '", persona_name, "' under user '", user_name, "'")
 
@@ -512,8 +519,6 @@ server <- function(input, output, session) {
             type = "message"
         )
         update_user_info(paste(c(message, captured_messages), collapse = "\n"))
-
-        updateSelectInput(session, "saveUserSelect", choices = list_users(), selected = user_name)
 
         removeModal()
 
