@@ -36,7 +36,7 @@ compute_potential <- function(persona, raster_dir, bbox = NULL) {
         compute_component(persona) |>
         rescale_to_unit_interval()
 
-    total <- rescale_to_unit_interval(slsra + fips_n + fips_i + water)
+    total <- rescale_to_unit_interval(sum(slsra, fips_n, fips_i, water, na.rm = TRUE))
 
     layers <- c(slsra, fips_n, fips_i, water, total)
     names(layers) <- c("SLSRA", "FIPS_N", "FIPS_I", "Water", "Recreational_Potential")
