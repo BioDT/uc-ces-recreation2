@@ -49,6 +49,16 @@ test_that("appending a person", {
 
     save_persona(persona1, test_file, "persona1")
     save_persona(persona2, test_file, "persona2")
+
+    expect_true(file.exists(test_file))
+
+    loaded_persona1 <- load_persona(test_file, name = "persona1")
+    loaded_persona2 <- load_persona(test_file, name = "persona2")
+
+    expect_equal(loaded_persona1, persona1)
+    expect_equal(loaded_persona2, persona2)
+
+    unlink(test_file)
 })
 
 # TODO:
